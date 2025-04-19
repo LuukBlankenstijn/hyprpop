@@ -2,14 +2,15 @@ package main
 
 import (
 	"hyprwindow/project/core"
+	"hyprwindow/project/listeners/floatingWindow"
 )
 
 func main() {
-	_, err := core.Initialize()
+	app, err := core.Initialize()
 	if err != nil {
 		panic(err)
 	}
 
-	// create window manager
-	// TODO: implement window manager
+	app.RegisterListener(floatingwindow.StartListening)
+	select {}
 }

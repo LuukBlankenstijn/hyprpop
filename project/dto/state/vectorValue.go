@@ -3,6 +3,7 @@ package state
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 )
 
 type VectorValue struct {
@@ -54,4 +55,11 @@ func (p *VectorValue) UnmarshalJSON(data []byte) error {
 	}
 
 	return errors.New("invalid size format: must be an integer (pixels) or a float (percentage)")
+}
+
+func (p *VectorValue) GetAsString() string {
+	if p.IsPercentage {
+		return strconv.Itoa(int(p.Value*10)) + "%"
+	}
+	return strconv.Itoa(int(p.Value))
 }

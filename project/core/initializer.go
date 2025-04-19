@@ -1,6 +1,7 @@
 package core
 
 import (
+	"hyprwindow/project/dto/pubsub"
 	"hyprwindow/project/state"
 	"hyprwindow/project/utils"
 )
@@ -8,6 +9,10 @@ import (
 type App struct {
 	State  *state.GlobalConfig
 	PubSub *utils.PubSub
+}
+
+func (a *App) RegisterListener(listener func(*state.GlobalConfig, chan pubsub.Event)) {
+	go listener(a.State, a.PubSub.Subscribe(10))
 }
 
 func Initialize() (*App, error) {

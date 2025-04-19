@@ -6,4 +6,5 @@ type WindowConfig struct {
 	Name     string  `yaml:"name"`
 	Size     Vec2    `yaml:"size"`
 	URL      string  `yaml:"url"`
+	Type     string  `yaml:"type"`
 }

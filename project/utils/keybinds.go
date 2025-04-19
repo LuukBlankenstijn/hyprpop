@@ -1,4 +1,4 @@
-package core
+package utils
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func registerKeybind(e pubsub.Event, keybind state.Keybind) error {
+func RegisterKeybind(e pubsub.Event, keybind state.Keybind) error {
 	if isbound, _ := isBound(e, keybind); isbound {
 		return nil
 	}
