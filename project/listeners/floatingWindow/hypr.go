@@ -1,13 +1,13 @@
 package floatingwindow
 
 import (
-	"hyprwindow/project/dto/state"
+	"hyprpop/project/dto/state"
 	"os"
 	"os/exec"
 	"path/filepath"
 )
 
-const ChromiumProfileDir = ".config/hypr/hyprwindow/chromium/floatingChromium"
+const ChromiumProfileDir = ".config/hypr/hyprpop/chromium/floatingChromium"
 
 func createChromiumWindow(window *state.WindowConfig) error {
 	home, err := os.UserHomeDir()

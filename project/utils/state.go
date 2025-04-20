@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"hyprwindow/project/state"
-	"hyprwindow/project/utils/hypr"
+	"hyprpop/project/state"
+	"hyprpop/project/utils/hypr"
 )
 
 func CleanupState(state *state.State) {

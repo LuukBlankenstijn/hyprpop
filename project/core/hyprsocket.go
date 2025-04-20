@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"hyprwindow/project/dto/pubsub"
+	"hyprpop/project/dto/pubsub"
 	"net"
 	"os"
 	"path/filepath"
@@ -50,10 +50,10 @@ func listenEvents(path string, writer pubsub.PubSubWriter) {
 
 func parseEvent(input string) (*pubsub.Event, bool) {
 	parts := strings.Split(input, ">>")
-	if len(parts) < 2 || parts[0] != "custom" || !strings.HasPrefix(parts[1], "hyprwindow") {
+	if len(parts) < 2 || parts[0] != "custom" || !strings.HasPrefix(parts[1], "hyprpop") {
 		return nil, false
 	}
-	eventData := strings.ReplaceAll(parts[1], "hyprwindow:", "")
+	eventData := strings.ReplaceAll(parts[1], "hyprpop:", "")
 	eventData = strings.TrimSuffix(eventData, "custom")
 	eventData = strings.TrimSuffix(eventData, "\n")
 	parts = strings.Split(eventData, ":")

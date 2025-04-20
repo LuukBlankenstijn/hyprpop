@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"hyprwindow/project/dto/pubsub"
+	"hyprpop/project/dto/pubsub"
 	"sync"
 )
 

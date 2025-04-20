@@ -2,16 +2,16 @@ package floatingwindow
 
 import (
 	"fmt"
-	"hyprwindow/project/dto/pubsub"
-	stateDto "hyprwindow/project/dto/state"
-	"hyprwindow/project/state"
-	"hyprwindow/project/utils"
-	"hyprwindow/project/utils/hypr"
+	"hyprpop/project/dto/pubsub"
+	stateDto "hyprpop/project/dto/state"
+	"hyprpop/project/state"
+	"hyprpop/project/utils"
+	"hyprpop/project/utils/hypr"
 )
 
 const (
 	eventType            = "floating"
-	specialWorkspaceName = "special:hyprwindow:" + eventType
+	specialWorkspaceName = "special:hyprpop:" + eventType
 )
 
 func StartListening(state *state.GlobalConfig, channel chan pubsub.Event) {

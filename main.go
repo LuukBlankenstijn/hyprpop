@@ -1,8 +1,8 @@
 package main
 
 import (
-	"hyprwindow/project/core"
-	"hyprwindow/project/listeners/floatingWindow"
+	"hyprpop/project/core"
+	"hyprpop/project/listeners/floatingWindow"
 )
 
 func main() {

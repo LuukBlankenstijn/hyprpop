@@ -3,8 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"hyprwindow/project/dto/pubsub"
-	"hyprwindow/project/dto/state"
+	"hyprpop/project/dto/pubsub"
+	"hyprpop/project/dto/state"
 	"os/exec"
 	"strings"
 )
@@ -14,7 +14,7 @@ func RegisterKeybind(e pubsub.Event, keybind state.Keybind) error {
 		return nil
 	}
 	k := fmt.Sprintf("%s, %s,", keybind.Mod, keybind.Key)
-	event := fmt.Sprintf("hyprwindow:%s:%s", e.Type, e.Name)
+	event := fmt.Sprintf("hyprpop:%s:%s", e.Type, e.Name)
 	cmd := exec.Command(
 		"hyprctl",
 		"keyword",
@@ -51,7 +51,7 @@ func isBound(event pubsub.Event, keybind state.Keybind) (bool, error) {
 	}
 
 	for index := range binds {
-		e := strings.ReplaceAll(events[index].Arg, "hyprwindow:", "")
+		e := strings.ReplaceAll(events[index].Arg, "hyprpop:", "")
 		parts := strings.Split(e, ":")
 		if binds[index] == keybind &&
 			parts[0] == event.Type &&

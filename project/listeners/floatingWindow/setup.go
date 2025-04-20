@@ -2,9 +2,9 @@ package floatingwindow
 
 import (
 	"fmt"
-	stateDto "hyprwindow/project/dto/state"
-	"hyprwindow/project/state"
-	"hyprwindow/project/utils/hypr"
+	stateDto "hyprpop/project/dto/state"
+	"hyprpop/project/state"
+	"hyprpop/project/utils/hypr"
 	"time"
 )
 

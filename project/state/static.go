@@ -1,7 +1,7 @@
 package state
 
 import (
-	"hyprwindow/project/dto/state"
+	"hyprpop/project/dto/state"
 	"sync"
 )
 

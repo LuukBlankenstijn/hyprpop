@@ -2,7 +2,7 @@ package state
 
 import (
 	"fmt"
-	"hyprwindow/project/dto/state"
+	"hyprpop/project/dto/state"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,7 +17,7 @@ type rawConfig struct {
 }
 
 var (
-	configPath = ".config/hypr/hyprwindow.yaml"
+	configPath = ".config/hypr/hyprpop.yaml"
 )
 
 func loadConfig() error {
