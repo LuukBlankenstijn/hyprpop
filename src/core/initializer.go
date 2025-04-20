@@ -1,9 +1,9 @@
 package core
 
 import (
-	"hyprpop/project/dto/pubsub"
-	"hyprpop/project/state"
-	"hyprpop/project/utils"
+	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/state"
+	"hyprpop/src/utils"
 )
 
 type App struct {

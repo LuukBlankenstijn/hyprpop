@@ -3,7 +3,7 @@ package hypr
 import (
 	"encoding/json"
 	"fmt"
-	"hyprpop/project/dto/state"
+	"hyprpop/src/dto/state"
 	"os/exec"
 )
 

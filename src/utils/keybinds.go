@@ -3,8 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"hyprpop/project/dto/pubsub"
-	"hyprpop/project/dto/state"
+	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/dto/state"
 	"os/exec"
 	"strings"
 )

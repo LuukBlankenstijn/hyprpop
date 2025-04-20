@@ -2,9 +2,9 @@ package floatingwindow
 
 import (
 	"fmt"
-	"hyprpop/project/dto/pubsub"
-	"hyprpop/project/state"
-	"hyprpop/project/utils"
+	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/state"
+	"hyprpop/src/utils"
 )
 
 func registerKeybinds(config *state.Config) {

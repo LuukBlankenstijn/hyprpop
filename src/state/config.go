@@ -2,7 +2,7 @@ package state
 
 import (
 	"fmt"
-	"hyprpop/project/dto/state"
+	"hyprpop/src/dto/state"
 	"log"
 	"os"
 	"path/filepath"

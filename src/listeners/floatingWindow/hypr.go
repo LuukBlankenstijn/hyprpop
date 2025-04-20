@@ -1,7 +1,7 @@
 package floatingwindow
 
 import (
-	"hyprpop/project/dto/state"
+	"hyprpop/src/dto/state"
 	"os"
 	"os/exec"
 	"path/filepath"

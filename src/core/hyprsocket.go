@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"hyprpop/project/dto/pubsub"
+	"hyprpop/src/dto/pubsub"
 	"net"
 	"os"
 	"path/filepath"

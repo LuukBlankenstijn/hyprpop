@@ -2,11 +2,11 @@ package floatingwindow
 
 import (
 	"fmt"
-	"hyprpop/project/dto/pubsub"
-	stateDto "hyprpop/project/dto/state"
-	"hyprpop/project/state"
-	"hyprpop/project/utils"
-	"hyprpop/project/utils/hypr"
+	"hyprpop/src/dto/pubsub"
+	stateDto "hyprpop/src/dto/state"
+	"hyprpop/src/state"
+	"hyprpop/src/utils"
+	"hyprpop/src/utils/hypr"
 )
 
 const (
