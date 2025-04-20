@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 )
 
-const ChromiumProfileDir = ".config/hypr/hyprwindow/chromium"
+const ChromiumProfileDir = ".config/hypr/hyprwindow/chromium/floatingChromium"
 
 func createChromiumWindow(window *state.WindowConfig) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
-	profilePath := filepath.Join(home, ChromiumProfileDir, window.Name)
+	profilePath := filepath.Join(home, ChromiumProfileDir)
 
 	cmd := exec.Command("chromium",
 		"--app="+window.URL,
