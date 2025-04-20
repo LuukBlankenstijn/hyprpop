@@ -7,84 +7,109 @@ import (
 	"hyprwindow/project/state"
 	"hyprwindow/project/utils"
 	"hyprwindow/project/utils/hypr"
-	"time"
 )
 
-const eventType = "floating"
+const (
+	eventType            = "floating"
+	specialWorkspaceName = "special:hyprwindow:" + eventType
+)
 
 func StartListening(state *state.GlobalConfig, channel chan pubsub.Event) {
 	registerKeybinds(state.GetConfigState())
 	setup(state)
-	listen(channel)
+	listen(state, channel)
 }
 
-func registerKeybinds(config *state.Config) {
-	windows := config.GetAllWindows()
-	for _, window := range windows {
-		if window.Type != eventType {
+func listen(store *state.GlobalConfig, channel chan pubsub.Event) {
+
+	state := store.GetAppState()
+	for event := range channel {
+		if event.Type != eventType {
 			continue
 		}
-		event := getEvent(window.Name)
-		err := utils.RegisterKeybind(event, window.Keybind)
-		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
-			continue
-		}
+
+		// execute the required action
+		handleEvent(store, event)
+
+		utils.CleanupState(state)
 	}
 }
 
-func getEvent(name string) pubsub.Event {
-	return pubsub.Event{
-		Type: eventType,
-		Name: name,
+func getMemoryWindow(store *state.GlobalConfig, name string) *stateDto.Window {
+	state := store.GetAppState()
+	config := store.GetConfigState()
+	window := state.GetWindow(name)
+	if window == nil {
+		windowConfig, ok := config.GetWindowConfig(name)
+		if !ok {
+			fmt.Printf("Window %s not found in config\n", name)
+			return nil
+		}
+		createSingleWindow(*windowConfig, state)
+		window = state.GetWindow(name)
 	}
+	return window
 }
 
-func setup(state *state.GlobalConfig) {
-	// create windows
-	windows := state.GetConfigState().GetAllWindows()
-	pids := make(map[int]stateDto.WindowConfig)
-	for _, window := range windows {
-		if window.Type != eventType {
-			continue
-		}
-		pid, err := createChromiumWindow(&window)
-		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
-			continue
-		}
-		pids[pid] = window
+func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
+	// get the window from the state, or create it if it doesn't exist
+	memoryWindow := getMemoryWindow(store, event.Name)
+
+	// get the current window from hyprland
+	currentWindow, err := hypr.GetWindowByAddress(memoryWindow.Address)
+	if err != nil {
+		fmt.Printf("Window %s not found in Hyprland\n", event.Name)
+		return
 	}
 
-	// sleep to allow hyprland to create the windows
-	time.Sleep(400 * time.Millisecond)
+	currentWorkspace, _ := hypr.GetActiveWorkSpace()
+	// TODO: handle hyprland errors
+	if currentWindow.Workspace == *currentWorkspace {
+		activeWindow, _ := hypr.GetActiveWindow()
+		if activeWindow.Address == currentWindow.Address {
+			// save size and position
+			err := hypr.SyncInSizeAndPos(currentWindow)
+			if err != nil {
+				fmt.Printf("Error syncing size and position: %v\n", err)
+				return
+			}
+			store.GetAppState().UpdateWindow(event.Name, currentWindow)
 
-	// store the windows in the state and set default position and size
-	for pid, window := range pids {
-		createdWindow, err := hypr.GetWindowByPid(pid)
-		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
-			continue
+			// move to special workspace
+			_ = hypr.MoveWindowToWorkspace(activeWindow, specialWorkspaceName, true)
+		} else {
+			_ = hypr.FocusWindow(*currentWindow)
 		}
-		state.GetAppState().AddWindow(window.Name, createdWindow)
-		err = hypr.SetSize(*createdWindow, window.Size)
-		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
-			continue
-		}
-		err = hypr.SetPosition(*createdWindow, window.Size)
-		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
-			continue
+	} else {
+		// different workspace
+		activeWorkspace, _ := hypr.GetActiveWorkSpace()
+		if currentWindow.Workspace.Name == specialWorkspaceName {
+			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+
+			// set size and position
+			err = hypr.SyncOutSizeAndPos(currentWindow)
+			if err != nil {
+				fmt.Printf("Error syncing size and position: %v\n", err)
+				return
+			}
+		} else {
+			// save size and position
+			err := hypr.SyncInSizeAndPos(currentWindow)
+			if err != nil {
+				fmt.Printf("Error syncing size and position: %v\n", err)
+				return
+			}
+			store.GetAppState().UpdateWindow(event.Name, currentWindow)
+
+			// move to current workspace
+			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+
+			// set size and position
+			err = hypr.SyncOutSizeAndPos(currentWindow)
+			if err != nil {
+				fmt.Printf("Error syncing size and position: %v\n", err)
+				return
+			}
 		}
 	}
-}
-
-func listen(chan pubsub.Event) {
-
 }

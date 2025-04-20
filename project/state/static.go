@@ -22,10 +22,11 @@ func (s *Config) updateWindowConfig(config state.WindowConfig) {
 	s.windowConfigs[config.Name] = &config
 }
 
-func (s *Config) getWindowConfig(name string) *state.WindowConfig {
+func (s *Config) GetWindowConfig(name string) (*state.WindowConfig, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.windowConfigs[name]
+	windowConfig, ok := s.windowConfigs[name]
+	return windowConfig, ok
 }
 
 func (s *Config) GetAllWindows() []state.WindowConfig {

@@ -45,7 +45,6 @@ func loadConfig() error {
 	if err := validateState(newConfig); err != nil {
 		return err
 	}
-	fmt.Println(newConfig)
 
 	// save
 	for _, config := range newConfig.Windows {

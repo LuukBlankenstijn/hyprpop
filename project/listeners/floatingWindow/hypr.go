@@ -9,10 +9,10 @@ import (
 
 const ChromiumProfileDir = ".config/hypr/hyprwindow/chromium"
 
-func createChromiumWindow(window *state.WindowConfig) (int, error) {
+func createChromiumWindow(window *state.WindowConfig) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return -1, err
+		return err
 	}
 	profilePath := filepath.Join(home, ChromiumProfileDir, window.Name)
 
@@ -22,13 +22,10 @@ func createChromiumWindow(window *state.WindowConfig) (int, error) {
 		"--user-data-dir="+profilePath,
 	)
 
-	cmd.Stderr = nil
-	cmd.Stdout = nil
-
 	err = cmd.Start()
 	if err != nil {
-		return -1, err
+		return err
 	}
 
-	return cmd.Process.Pid, nil
+	return nil
 }
