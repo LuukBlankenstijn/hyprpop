@@ -8,4 +8,14 @@ type Monitor struct {
 	Workspace Workspace `json:"activeWorkspace"`
 	Scale     float64   `json:"scale"`
 	Focused   bool      `json:"focused"`
+	X         int       `json:"x"`
+	Y         int       `json:"y"`
+}
+
+func (m *Monitor) GetWidth() int {
+	return int(float64(m.Width) / m.Scale)
+}
+
+func (m *Monitor) GetHeight() int {
+	return int(float64(m.Height) / m.Scale)
 }

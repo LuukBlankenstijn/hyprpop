@@ -17,34 +17,42 @@ func createSingleWindow(window stateDto.WindowConfig, state *state.State) {
 }
 
 func createWindows(windows []stateDto.WindowConfig, state *state.State) {
+	pids := make(map[int]stateDto.WindowConfig)
 	// create windows
 	for _, window := range windows {
 		if window.Type != eventType {
 			continue
 		}
-		err := createChromiumWindow(&window)
+		pid, err := createChromiumWindow(&window)
 		if err != nil {
 			fmt.Println(err)
 			// TODO: log error
 			continue
 		}
+		pids[pid] = window
 	}
 
 	// sleep to allow hyprland to create the windows
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 
 	// store the windows in the state and set default position and size
-	for _, window := range windows {
-		createdWindow, err := hypr.GetWindowByName(window.Name)
+	for pid, window := range pids {
+		createdWindow, err := hypr.GetWindowByPid(pid)
 		if err != nil {
 			fmt.Println(err)
 			time.Sleep(1 * time.Second)
-			createdWindow, err = hypr.GetWindowByName(window.Name)
+			createdWindow, err = hypr.GetWindowByPid(pid)
 			if err != nil {
 				fmt.Println(err)
 				// TODO: log error
 				continue
 			}
+		}
+		err = hypr.SetFloating(createdWindow, true)
+		if err != nil {
+			fmt.Println(err)
+			// TODO: log error
+			continue
 		}
 		state.UpdateWindow(window.Name, createdWindow)
 		err = hypr.SetSize(*createdWindow, window.Size)

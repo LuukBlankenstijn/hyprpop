@@ -87,9 +87,14 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
 
 			// set size and position
-			err = hypr.SyncOutSizeAndPos(currentWindow)
+			err = hypr.SetSize(*currentWindow, memoryWindow.Size)
 			if err != nil {
-				fmt.Printf("Error syncing size and position: %v\n", err)
+				fmt.Printf("Error setting size: %v\n", err)
+				return
+			}
+			err = hypr.SetPosition(*currentWindow, memoryWindow.Position)
+			if err != nil {
+				fmt.Printf("Error setting position: %v\n", err)
 				return
 			}
 		} else {

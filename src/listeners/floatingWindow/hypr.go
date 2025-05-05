@@ -9,12 +9,12 @@ import (
 
 const ChromiumProfileDir = ".config/hypr/hyprpop/chromium/floatingChromium"
 
-func createChromiumWindow(window *state.WindowConfig) error {
+func createChromiumWindow(window *state.WindowConfig) (int, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		return -1, err
 	}
-	profilePath := filepath.Join(home, ChromiumProfileDir)
+	profilePath := filepath.Join(home, ChromiumProfileDir, window.Name)
 
 	cmd := exec.Command("chromium",
 		"--app="+window.URL,
@@ -24,8 +24,8 @@ func createChromiumWindow(window *state.WindowConfig) error {
 
 	err = cmd.Start()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	return nil
+	return cmd.Process.Pid, nil
 }

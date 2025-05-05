@@ -64,6 +64,19 @@ func GetWindowByName(name string) (*state.Window, error) {
 	return nil, fmt.Errorf("window not found")
 }
 
+func GetWindowByPid(pid int) (*state.Window, error) {
+	windows, err := getAllWindows()
+	if err != nil {
+		return nil, err
+	}
+	for _, window := range windows {
+		if window.Pid == pid {
+			return &window, nil
+		}
+	}
+	return nil, fmt.Errorf("window not found")
+}
+
 func SetSize(window state.Window, size state.Vec2) error {
 	cmd := exec.Command("hyprctl",
 		"dispatch",
@@ -80,12 +93,17 @@ func SetSize(window state.Window, size state.Vec2) error {
 }
 
 func SetPosition(window state.Window, position state.Vec2) error {
+	fmt.Printf("%+v\n", position)
+	x, y, err := getExactPosition(position)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("hyprctl",
 		"dispatch",
 		"movewindowpixel",
 		"exact",
-		position.X.GetAsString(),
-		position.Y.GetAsString()+",",
+		x,
+		y+",",
 		"address:"+window.Address,
 	)
 	if err := cmd.Run(); err != nil {
@@ -100,19 +118,19 @@ func GetRelativeSize(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	activeMonitor, err := getActiveMonitor()
+	monitor, err := getMonitorByWorkspace(&window.Workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active monitor: %w", err)
 	}
 
 	relativeSize := state.Vec2{
 		X: state.VectorValue{
-			Value:        hyprlandWindow.Size.X.Value / (float64(activeMonitor.Width) / activeMonitor.Scale),
-			IsPercentage: hyprlandWindow.Size.X.Value < (float64(activeMonitor.Width) / activeMonitor.Scale),
+			Value:        hyprlandWindow.Size.X.Value / float64(monitor.GetWidth()),
+			IsPercentage: hyprlandWindow.Size.X.Value < float64(monitor.GetWidth()),
 		},
 		Y: state.VectorValue{
-			Value:        hyprlandWindow.Size.Y.Value / (float64(activeMonitor.Height) / activeMonitor.Scale),
-			IsPercentage: hyprlandWindow.Size.Y.Value < (float64(activeMonitor.Height) / activeMonitor.Scale),
+			Value:        hyprlandWindow.Size.Y.Value / float64(monitor.GetHeight()),
+			IsPercentage: hyprlandWindow.Size.Y.Value < float64(monitor.GetHeight()),
 		},
 	}
 
@@ -132,19 +150,19 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	activeMonitor, err := getActiveMonitor()
+	monitor, err := getMonitorByWorkspace(&window.Workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active monitor: %w", err)
 	}
 
 	relativePosition := state.Vec2{
 		X: state.VectorValue{
-			Value:        hyprlandWindow.Position.X.Value / (float64(activeMonitor.Width) / activeMonitor.Scale),
-			IsPercentage: hyprlandWindow.Position.X.Value < (float64(activeMonitor.Width) / activeMonitor.Scale),
+			Value:        hyprlandWindow.Position.X.Value / float64(monitor.GetWidth()),
+			IsPercentage: hyprlandWindow.Position.X.Value < float64(monitor.GetWidth()),
 		},
 		Y: state.VectorValue{
-			Value:        hyprlandWindow.Position.Y.Value / (float64(activeMonitor.Height) / activeMonitor.Scale),
-			IsPercentage: hyprlandWindow.Position.Y.Value < (float64(activeMonitor.Height) / activeMonitor.Scale),
+			Value:        hyprlandWindow.Position.Y.Value / float64(monitor.GetHeight()),
+			IsPercentage: hyprlandWindow.Position.Y.Value < float64(monitor.GetHeight()),
 		},
 	}
 
@@ -193,6 +211,19 @@ func SyncOutSizeAndPos(window *state.Window) error {
 	err = SetPosition(*window, window.Position)
 	if err != nil {
 		return fmt.Errorf("error setting position: %v", err)
+	}
+	return nil
+}
+
+func SetFloating(window *state.Window, floating bool) error {
+	cmd := exec.Command(
+		"hyprctl",
+		"dispatch",
+		"setfloating",
+		"address:"+window.Address,
+	)
+	if err := cmd.Run(); err != nil {
+		return err
 	}
 	return nil
 }
