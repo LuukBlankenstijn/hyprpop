@@ -72,5 +72,6 @@ func createWindows(windows []stateDto.WindowConfig, state *state.State) {
 			return
 		}
 		state.UpdateWindow(window.Name, createdWindow)
+		_ = hypr.MoveWindowToWorkspace(createdWindow, specialWorkspaceName, true)
 	}
 }
