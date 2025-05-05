@@ -85,6 +85,7 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 		activeWorkspace, _ := hypr.GetActiveWorkSpace()
 		if currentWindow.Workspace.Name == specialWorkspaceName {
 			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+			currentWindow.Workspace = *activeWorkspace
 
 			// set size and position
 			err = hypr.SetSize(*currentWindow, memoryWindow.Size)
@@ -108,6 +109,7 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 
 			// move to current workspace
 			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+			currentWindow.Workspace = *activeWorkspace
 
 			// set size and position
 			err = hypr.SyncOutSizeAndPos(currentWindow)

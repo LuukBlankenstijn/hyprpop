@@ -3,6 +3,7 @@ package main
 import (
 	"hyprpop/src/core"
 	"hyprpop/src/listeners/floatingWindow"
+	"time"
 )
 
 func main() {
@@ -12,5 +13,6 @@ func main() {
 	}
 
 	app.RegisterListener(floatingwindow.StartListening)
+	time.Sleep(1 * time.Second)
 	select {}
 }

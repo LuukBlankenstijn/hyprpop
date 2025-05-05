@@ -93,8 +93,7 @@ func SetSize(window state.Window, size state.Vec2) error {
 }
 
 func SetPosition(window state.Window, position state.Vec2) error {
-	fmt.Printf("%+v\n", position)
-	x, y, err := getExactPosition(position)
+	x, y, err := getExactPosition(position, window)
 	if err != nil {
 		return err
 	}
@@ -120,7 +119,7 @@ func GetRelativeSize(window state.Window) (*state.Vec2, error) {
 
 	monitor, err := getMonitorByWorkspace(&window.Workspace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active monitor: %w", err)
+		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
 
 	relativeSize := state.Vec2{
@@ -152,7 +151,11 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 
 	monitor, err := getMonitorByWorkspace(&window.Workspace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active monitor: %w", err)
+		return nil, fmt.Errorf("failed to get monitor: %w", err)
+	}
+
+	if err = makePositionLocal(hyprlandWindow); err != nil {
+		return nil, fmt.Errorf("failed to localize position: %w", err)
 	}
 
 	relativePosition := state.Vec2{
@@ -225,5 +228,26 @@ func SetFloating(window *state.Window, floating bool) error {
 	if err := cmd.Run(); err != nil {
 		return err
 	}
+	return nil
+}
+
+func makePositionLocal(window *state.Window) error {
+	monitor, err := getMonitorByWorkspace(&window.Workspace)
+	if err != nil {
+		return fmt.Errorf("failed to get monitor: %w", err)
+	}
+
+	position := state.Vec2{
+		X: state.VectorValue{
+			Value:        float64(int(window.Position.X.Value) - monitor.X),
+			IsPercentage: false,
+		},
+		Y: state.VectorValue{
+			Value:        float64(int(window.Position.Y.Value) - monitor.Y),
+			IsPercentage: false,
+		},
+	}
+
+	window.Position = position
 	return nil
 }

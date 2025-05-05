@@ -54,7 +54,6 @@ func createWindows(windows []stateDto.WindowConfig, state *state.State) {
 			// TODO: log error
 			continue
 		}
-		state.UpdateWindow(window.Name, createdWindow)
 		err = hypr.SetSize(*createdWindow, window.Size)
 		if err != nil {
 			fmt.Println(err)
@@ -67,5 +66,11 @@ func createWindows(windows []stateDto.WindowConfig, state *state.State) {
 			// TODO: log error
 			continue
 		}
+		err = hypr.SyncInSizeAndPos(createdWindow)
+		if err != nil {
+			fmt.Printf("Error syncing size and position: %v\n", err)
+			return
+		}
+		state.UpdateWindow(window.Name, createdWindow)
 	}
 }

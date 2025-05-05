@@ -6,10 +6,10 @@ import (
 	"strconv"
 )
 
-func getExactPosition(p state.Vec2) (string, string, error) {
-	monitor, err := getActiveMonitor()
+func getExactPosition(p state.Vec2, window state.Window) (string, string, error) {
+	monitor, err := getMonitorByWorkspace(&window.Workspace)
 	if err != nil {
-		return "", "", fmt.Errorf("could not get current monitor")
+		return "", "", fmt.Errorf("could not get current monitor: %w", err)
 	}
 	var pixels int
 
