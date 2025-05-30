@@ -196,6 +196,17 @@ func FocusWindow(window state.Window) error {
 	if err := cmd.Run(); err != nil {
 		return err
 	}
+
+	cmd = exec.Command(
+		"hyprctl",
+		"dispatch",
+		"alterzorder",
+		"top,",
+		"address:"+window.Address,
+	)
+	if err := cmd.Run(); err != nil {
+		return err
+	}
 	return nil
 }
 
