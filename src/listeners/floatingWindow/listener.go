@@ -85,7 +85,11 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 		activeWorkspace, _ := hypr.GetActiveWorkSpace()
 		if currentWindow.Workspace.Name == specialWorkspaceName {
 			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+
+			// set new monitor and workspace manually
+			monitor, _ := hypr.GetMonitorByWorkspace(activeWorkspace)
 			currentWindow.Workspace = *activeWorkspace
+			currentWindow.MonitorId = monitor.Id
 
 			// set size and position
 			err = hypr.SetSize(*currentWindow, memoryWindow.Size)
@@ -98,6 +102,7 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 				fmt.Printf("Error setting position: %v\n", err)
 				return
 			}
+			_ = hypr.FocusWindow(*currentWindow)
 		} else {
 			// save size and position
 			err := hypr.SyncInSizeAndPos(currentWindow)
@@ -109,7 +114,11 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 
 			// move to current workspace
 			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+
+			// set new monitor and workspace manually
+			monitor, _ := hypr.GetMonitorByWorkspace(activeWorkspace)
 			currentWindow.Workspace = *activeWorkspace
+			currentWindow.MonitorId = monitor.Id
 
 			// set size and position
 			err = hypr.SyncOutSizeAndPos(currentWindow)
@@ -117,6 +126,7 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 				fmt.Printf("Error syncing size and position: %v\n", err)
 				return
 			}
+			_ = hypr.FocusWindow(*currentWindow)
 		}
 	}
 }

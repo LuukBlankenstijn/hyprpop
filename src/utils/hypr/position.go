@@ -7,7 +7,7 @@ import (
 )
 
 func getExactPosition(p state.Vec2, window state.Window) (string, string, error) {
-	monitor, err := getMonitorByWorkspace(&window.Workspace)
+	monitor, err := GetMonitorByWorkspace(&window.Workspace)
 	if err != nil {
 		return "", "", fmt.Errorf("could not get current monitor: %w", err)
 	}
@@ -20,7 +20,6 @@ func getExactPosition(p state.Vec2, window state.Window) (string, string, error)
 	} else {
 		pixels = int(v.Value)
 	}
-	// fmt.Println(pixels)
 	x := strconv.Itoa(pixels + monitor.X)
 
 	// Y value
@@ -30,7 +29,6 @@ func getExactPosition(p state.Vec2, window state.Window) (string, string, error)
 	} else {
 		pixels = int(v.Value)
 	}
-	// fmt.Println(pixels)
 	y := strconv.Itoa(pixels + monitor.Y)
 	return x, y, nil
 }

@@ -7,29 +7,7 @@ import (
 	"os/exec"
 )
 
-func getActiveMonitor() (*state.Monitor, error) {
-	cmd := exec.Command("hyprctl", "monitors", "-j")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute hyprctl: %w", err)
-	}
-
-	var monitor []state.Monitor
-	if err := json.Unmarshal(output, &monitor); err != nil {
-		fmt.Println(err)
-		return nil, fmt.Errorf("failed to parse JSON: %w", err)
-	}
-
-	for _, monitor := range monitor {
-		if monitor.Focused {
-			return &monitor, nil
-		}
-	}
-
-	return nil, fmt.Errorf("no active monitor found")
-}
-
-func getMonitorByWorkspace(workspace *state.Workspace) (*state.Monitor, error) {
+func GetMonitorByWorkspace(workspace *state.Workspace) (*state.Monitor, error) {
 	cmd := exec.Command("hyprctl", "monitors", "-j")
 	output, err := cmd.Output()
 	if err != nil {
@@ -49,4 +27,26 @@ func getMonitorByWorkspace(workspace *state.Workspace) (*state.Monitor, error) {
 	}
 
 	return nil, fmt.Errorf("no active monitor found")
+}
+
+func getMonitorById(id int) (*state.Monitor, error) {
+	cmd := exec.Command("hyprctl", "monitors", "-j")
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute hyprctl: %w", err)
+	}
+
+	var monitors []state.Monitor
+	if err := json.Unmarshal(output, &monitors); err != nil {
+		fmt.Println(err)
+		return nil, fmt.Errorf("failed to parse JSON: %w", err)
+	}
+
+	for _, monitor := range monitors {
+		if monitor.Id == id {
+			return &monitor, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no monitor with id %d found", id)
 }

@@ -78,12 +78,16 @@ func GetWindowByPid(pid int) (*state.Window, error) {
 }
 
 func SetSize(window state.Window, size state.Vec2) error {
+	x, y, err := getExactSize(size, window.MonitorId)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("hyprctl",
 		"dispatch",
 		"resizewindowpixel",
 		"exact",
-		size.X.GetAsString(),
-		size.Y.GetAsString()+",",
+		x,
+		y+",",
 		"address:"+window.Address,
 	)
 	if err := cmd.Run(); err != nil {
@@ -117,7 +121,7 @@ func GetRelativeSize(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	monitor, err := getMonitorByWorkspace(&window.Workspace)
+	monitor, err := GetMonitorByWorkspace(&window.Workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
@@ -149,7 +153,7 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	monitor, err := getMonitorByWorkspace(&window.Workspace)
+	monitor, err := GetMonitorByWorkspace(&window.Workspace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
@@ -179,6 +183,9 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 	return &relativePosition, nil
 }
 
+/**
+* Give a window focus.
+ */
 func FocusWindow(window state.Window) error {
 	cmd := exec.Command(
 		"hyprctl",
@@ -192,6 +199,9 @@ func FocusWindow(window state.Window) error {
 	return nil
 }
 
+/**
+* Loads the current size and position from the hyprctl api into the window object
+ */
 func SyncInSizeAndPos(window *state.Window) error {
 	newSize, err := GetRelativeSize(*window)
 	if err != nil {
@@ -206,6 +216,9 @@ func SyncInSizeAndPos(window *state.Window) error {
 	return nil
 }
 
+/**
+* Sets the size and position of the window from the object with the hyprctl api
+ */
 func SyncOutSizeAndPos(window *state.Window) error {
 	err := SetSize(*window, window.Size)
 	if err != nil {
@@ -218,6 +231,9 @@ func SyncOutSizeAndPos(window *state.Window) error {
 	return nil
 }
 
+/**
+* Makes sets the window to float depending on floating
+ */
 func SetFloating(window *state.Window, floating bool) error {
 	cmd := exec.Command(
 		"hyprctl",
@@ -231,8 +247,11 @@ func SetFloating(window *state.Window, floating bool) error {
 	return nil
 }
 
+/**
+* Gets the global position of a window, and makes it local to the monitor it is on.
+ */
 func makePositionLocal(window *state.Window) error {
-	monitor, err := getMonitorByWorkspace(&window.Workspace)
+	monitor, err := GetMonitorByWorkspace(&window.Workspace)
 	if err != nil {
 		return fmt.Errorf("failed to get monitor: %w", err)
 	}
