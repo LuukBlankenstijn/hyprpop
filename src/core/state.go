@@ -1,4 +1,4 @@
-package utils
+package core
 
 import (
 	hyprapi "hyprpop/src/hypr/api"

@@ -2,13 +2,13 @@ package floatingwindow
 
 import (
 	"fmt"
+	"hyprpop/src/core"
 	"hyprpop/src/dto/pubsub"
 	stateDto "hyprpop/src/dto/state"
 	hyprapi "hyprpop/src/hypr/api"
 	hyprutils "hyprpop/src/hypr/utils"
 	"hyprpop/src/logging"
 	"hyprpop/src/state"
-	"hyprpop/src/utils"
 )
 
 const (
@@ -36,7 +36,7 @@ func listen(store *state.GlobalConfig, channel chan pubsub.Event) {
 		// execute the required action
 		handleEvent(store, event)
 
-		utils.CleanupState(state)
+		core.CleanupState(state)
 	}
 }
 
