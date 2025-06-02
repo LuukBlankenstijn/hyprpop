@@ -76,5 +76,5 @@ func (k *Keybind) UnmarshalJSON(data []byte) error {
 }
 
 func (k *Keybind) ToString() string {
-	return fmt.Sprintf("%s, %s,", k.Mod, k.Key)
+	return fmt.Sprintf("%s, %s", k.Mod, k.Key)
 }

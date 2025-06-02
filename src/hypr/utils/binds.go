@@ -20,6 +20,23 @@ func RegisterKeybind(e pubsub.Event, keybind state.Keybind) error {
 	return err
 }
 
+func DeregisterAllKeybinds() error {
+	binds, err := api.GetAllKeybinds()
+	if err != nil {
+		return fmt.Errorf("failed to get all keybinds: %w", err)
+	}
+	for _, b := range binds {
+		if b.Dispatcher == "event" && strings.HasPrefix(b.Arg, "hyprpop:") {
+			keybind := state.Keybind{
+				Mod: state.ModToString(b.Mod),
+				Key: b.Key,
+			}
+			_ = api.DeregisterKeybind(keybind)
+		}
+	}
+	return nil
+}
+
 func isBound(event pubsub.Event, keybind state.Keybind) (bool, error) {
 	cmd := exec.Command("hyprctl", "binds", "-j")
 	output, err := cmd.Output()

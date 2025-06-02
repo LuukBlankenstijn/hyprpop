@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"hyprpop/src/core"
+	hyprutils "hyprpop/src/hypr/utils"
 	floatingwindow "hyprpop/src/listeners/floatingWindow"
+	"hyprpop/src/state"
 	"os"
 	"os/signal"
 	"sync"
@@ -24,22 +25,22 @@ func main() {
 	app.RegisterListener(floatingwindow.StartListening)
 	time.Sleep(1 * time.Second)
 
-	defer cleanup()
+	defer cleanup(app.State)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)
 
 	go func() {
 		<-c
-		cleanup()
+		cleanup(app.State)
 		os.Exit(0)
 	}()
 	select {}
 }
 
-func cleanup() {
+func cleanup(state *state.GlobalConfig) {
 	cleanupOnce.Do(func() {
-		fmt.Println("cleanup...")
-		//TODO: deregister keybinds, kill windows
+		_ = hyprutils.DeregisterAllKeybinds()
+		hyprutils.KillAllWindows(*state)
 	})
 }

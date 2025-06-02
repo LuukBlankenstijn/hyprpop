@@ -2,12 +2,15 @@ package utils
 
 import (
 	"fmt"
-	"hyprpop/src/dto/state"
+	stateDto "hyprpop/src/dto/state"
 	"hyprpop/src/hypr/api"
+	"hyprpop/src/state"
+	"os"
 	"os/exec"
+	"syscall"
 )
 
-func SetSize(window state.Window, size state.Vec2) error {
+func SetSize(window stateDto.Window, size stateDto.Vec2) error {
 	monitor, err := api.GetMonitorById(window.MonitorId)
 	if err != nil {
 		return err
@@ -30,7 +33,7 @@ func SetSize(window state.Window, size state.Vec2) error {
 	return nil
 }
 
-func SetPosition(window state.Window, position state.Vec2) error {
+func SetPosition(window stateDto.Window, position stateDto.Vec2) error {
 	monitor, err := api.GetMonitorById(window.MonitorId)
 	if err != nil {
 		return err
@@ -53,7 +56,7 @@ func SetPosition(window state.Window, position state.Vec2) error {
 	return nil
 }
 
-func GetRelativeSize(window state.Window) (*state.Vec2, error) {
+func GetRelativeSize(window stateDto.Window) (*stateDto.Vec2, error) {
 	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
@@ -64,12 +67,12 @@ func GetRelativeSize(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
 
-	relativeSize := state.Vec2{
-		X: state.VectorValue{
+	relativeSize := stateDto.Vec2{
+		X: stateDto.VectorValue{
 			Value:        hyprlandWindow.Size.X.Value / float64(monitor.GetWidth()),
 			IsPercentage: hyprlandWindow.Size.X.Value < float64(monitor.GetWidth()),
 		},
-		Y: state.VectorValue{
+		Y: stateDto.VectorValue{
 			Value:        hyprlandWindow.Size.Y.Value / float64(monitor.GetHeight()),
 			IsPercentage: hyprlandWindow.Size.Y.Value < float64(monitor.GetHeight()),
 		},
@@ -85,7 +88,7 @@ func GetRelativeSize(window state.Window) (*state.Vec2, error) {
 	return &relativeSize, nil
 }
 
-func GetRelativePosition(window state.Window) (*state.Vec2, error) {
+func GetRelativePosition(window stateDto.Window) (*stateDto.Vec2, error) {
 	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
@@ -100,12 +103,12 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to localize position: %w", err)
 	}
 
-	relativePosition := state.Vec2{
-		X: state.VectorValue{
+	relativePosition := stateDto.Vec2{
+		X: stateDto.VectorValue{
 			Value:        hyprlandWindow.Position.X.Value / float64(monitor.GetWidth()),
 			IsPercentage: hyprlandWindow.Position.X.Value < float64(monitor.GetWidth()),
 		},
-		Y: state.VectorValue{
+		Y: stateDto.VectorValue{
 			Value:        hyprlandWindow.Position.Y.Value / float64(monitor.GetHeight()),
 			IsPercentage: hyprlandWindow.Position.Y.Value < float64(monitor.GetHeight()),
 		},
@@ -124,7 +127,7 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 /**
 * Loads the current size and position from the hyprctl api into the window object
  */
-func SyncInSizeAndPos(window *state.Window) error {
+func SyncInSizeAndPos(window *stateDto.Window) error {
 	newSize, err := GetRelativeSize(*window)
 	if err != nil {
 		return fmt.Errorf("error getting size: %v", err)
@@ -141,7 +144,7 @@ func SyncInSizeAndPos(window *state.Window) error {
 /**
 * Sets the size and position of the window from the object with the hyprctl api
  */
-func SyncOutSizeAndPos(window *state.Window) error {
+func SyncOutSizeAndPos(window *stateDto.Window) error {
 	err := SetSize(*window, window.Size)
 	if err != nil {
 		return fmt.Errorf("error setting size: %v", err)
@@ -156,18 +159,18 @@ func SyncOutSizeAndPos(window *state.Window) error {
 /**
 * Gets the global position of a window, and makes it local to the monitor it is on.
  */
-func makePositionLocal(window *state.Window) error {
+func makePositionLocal(window *stateDto.Window) error {
 	monitor, err := api.GetMonitorById(window.MonitorId)
 	if err != nil {
 		return fmt.Errorf("failed to get monitor: %w", err)
 	}
 
-	position := state.Vec2{
-		X: state.VectorValue{
+	position := stateDto.Vec2{
+		X: stateDto.VectorValue{
 			Value:        float64(int(window.Position.X.Value) - monitor.X),
 			IsPercentage: false,
 		},
-		Y: state.VectorValue{
+		Y: stateDto.VectorValue{
 			Value:        float64(int(window.Position.Y.Value) - monitor.Y),
 			IsPercentage: false,
 		},
@@ -175,4 +178,19 @@ func makePositionLocal(window *state.Window) error {
 
 	window.Position = position
 	return nil
+}
+
+func KillAllWindows(state state.GlobalConfig) {
+	windows := state.GetAppState().GetAllWindows()
+	for _, w := range windows {
+		process, err := os.FindProcess(w.Pid)
+		if err != nil {
+			continue
+		}
+
+		err = process.Signal(syscall.SIGTERM)
+		if err != nil {
+			continue
+		}
+	}
 }
