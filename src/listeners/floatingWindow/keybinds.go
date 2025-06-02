@@ -1,8 +1,8 @@
 package floatingwindow
 
 import (
-	"fmt"
 	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/logging"
 	"hyprpop/src/state"
 	"hyprpop/src/utils"
 )
@@ -16,8 +16,7 @@ func registerKeybinds(config *state.Config) {
 		event := getEvent(window.Name)
 		err := utils.RegisterKeybind(event, window.Keybind)
 		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
+			logging.Warn("failed to register keybind: %+v", err)
 			continue
 		}
 	}

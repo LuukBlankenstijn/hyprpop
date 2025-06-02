@@ -3,6 +3,7 @@ package floatingwindow
 import (
 	"fmt"
 	stateDto "hyprpop/src/dto/state"
+	"hyprpop/src/logging"
 	"hyprpop/src/state"
 	"hyprpop/src/utils/hypr"
 	"log"
@@ -32,8 +33,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 		}
 		pid, err := createChromiumWindow(window)
 		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
+			logging.Error("Failed to created window: %w", err)
 			continue
 		}
 		pids[pid] = *window
@@ -50,36 +50,36 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 			time.Sleep(1 * time.Second)
 			createdWindow, err = hypr.GetWindowByPid(pid)
 			if err != nil {
-				fmt.Println(err)
-				// TODO: log error
+				logging.Warn("failed to get window by PID: %+v", err)
 				continue
 			}
 		}
 		err = hypr.SetFloating(createdWindow, true)
 		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
+			logging.Warn("failed to set window floating: %+v", err)
 			continue
 		}
 		err = hypr.SetSize(*createdWindow, window.Size)
 		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
+			logging.Warn("failed to set window size: %+v", err)
 			continue
 		}
 		err = hypr.SetPosition(*createdWindow, window.Position)
 		if err != nil {
-			fmt.Println(err)
-			// TODO: log error
+			logging.Warn("failed to set window position: %+v", err)
 			continue
 		}
 		err = hypr.SyncInSizeAndPos(createdWindow)
 		if err != nil {
-			fmt.Printf("Error syncing size and position: %v\n", err)
+			logging.Warn("failed to save window state to memory")
 			return
 		}
 		state.UpdateWindow(window.Name, createdWindow)
-		_ = hypr.MoveWindowToWorkspace(createdWindow, specialWorkspaceName, true)
+		err = hypr.MoveWindowToWorkspace(createdWindow, specialWorkspaceName, true)
+		if err != nil {
+			logging.Warn("failed to move window to hidden workspace")
+			return
+		}
 	}
 }
 

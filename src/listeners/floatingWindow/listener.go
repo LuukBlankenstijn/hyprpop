@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hyprpop/src/dto/pubsub"
 	stateDto "hyprpop/src/dto/state"
+	"hyprpop/src/logging"
 	"hyprpop/src/state"
 	"hyprpop/src/utils"
 	"hyprpop/src/utils/hypr"
@@ -14,7 +15,10 @@ const (
 	specialWorkspaceName = "special:hyprpop:" + eventType
 )
 
+var store *state.GlobalConfig
+
 func StartListening(state *state.GlobalConfig, channel chan pubsub.Event) {
+	store = state
 	registerKeybinds(state.GetConfigState())
 	setup(state)
 	listen(state, channel)
@@ -35,98 +39,144 @@ func listen(store *state.GlobalConfig, channel chan pubsub.Event) {
 	}
 }
 
-func getMemoryWindow(store *state.GlobalConfig, name string) *stateDto.Window {
+func getMemoryWindow(store *state.GlobalConfig, name string) (*stateDto.Window, error) {
 	state := store.GetAppState()
 	config := store.GetConfigState()
 	window := state.GetWindow(name)
 	if window == nil {
 		windowConfig, ok := config.GetWindowConfig(name)
 		if !ok {
-			fmt.Printf("Window %s not found in config\n", name)
-			return nil
+			return nil, fmt.Errorf("window %s not found in config", name)
 		}
 		createSingleWindow(*windowConfig, state)
 		window = state.GetWindow(name)
 	}
-	return window
+	return window, nil
 }
 
 func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 	// get the window from the state, or create it if it doesn't exist
-	memoryWindow := getMemoryWindow(store, event.Name)
+	memoryWindow, err := getMemoryWindow(store, event.Name)
+	if err != nil {
+		logging.Error("failed getting window from memory: ", err)
+		return
+	}
 
 	// get the current window from hyprland
 	currentWindow, err := hypr.GetWindowByAddress(memoryWindow.Address)
 	if err != nil {
-		fmt.Printf("Window %s not found in Hyprland\n", event.Name)
+		logging.Warn("Window %s not found in Hyprland\n", event.Name)
 		return
 	}
 
-	currentWorkspace, _ := hypr.GetActiveWorkSpace()
-	// TODO: handle hyprland errors
-	if currentWindow.Workspace == *currentWorkspace {
-		activeWindow, _ := hypr.GetActiveWindow()
-		if activeWindow.Address == currentWindow.Address {
-			// save size and position
-			err := hypr.SyncInSizeAndPos(currentWindow)
-			if err != nil {
-				fmt.Printf("Error syncing size and position: %v\n", err)
-				return
-			}
-			store.GetAppState().UpdateWindow(event.Name, currentWindow)
+	currentWorkspace, err := hypr.GetActiveWorkSpace()
+	if err != nil {
+		logging.Error("Active workspace not found", err)
+		return
+	}
 
-			// move to special workspace
-			_ = hypr.MoveWindowToWorkspace(activeWindow, specialWorkspaceName, true)
+	defer func() {
+		if err != nil {
+			logging.Error("failed to handle event %+v", err, event)
+		}
+	}()
+	if currentWindow.Workspace == *currentWorkspace {
+		activeWindow, err := hypr.GetActiveWindow()
+		if err != nil {
+			return
+		}
+		if activeWindow.Address == currentWindow.Address {
+			err = toHiddenWorkspace(currentWindow, event.Name)
 		} else {
 			_ = hypr.FocusWindow(*currentWindow)
+			err = hypr.MoveWindowToTop(*currentWindow)
 		}
 	} else {
-		// different workspace
-		activeWorkspace, _ := hypr.GetActiveWorkSpace()
 		if currentWindow.Workspace.Name == specialWorkspaceName {
-			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
-
-			// set new monitor and workspace manually
-			monitor, _ := hypr.GetMonitorByWorkspace(activeWorkspace)
-			currentWindow.Workspace = *activeWorkspace
-			currentWindow.MonitorId = monitor.Id
-
-			// set size and position
-			err = hypr.SetSize(*currentWindow, memoryWindow.Size)
-			if err != nil {
-				fmt.Printf("Error setting size: %v\n", err)
-				return
-			}
-			err = hypr.SetPosition(*currentWindow, memoryWindow.Position)
-			if err != nil {
-				fmt.Printf("Error setting position: %v\n", err)
-				return
-			}
-			_ = hypr.FocusWindow(*currentWindow)
+			err = fromHiddenWorkspace(currentWindow, event.Name)
 		} else {
-			// save size and position
-			err := hypr.SyncInSizeAndPos(currentWindow)
-			if err != nil {
-				fmt.Printf("Error syncing size and position: %v\n", err)
-				return
-			}
-			store.GetAppState().UpdateWindow(event.Name, currentWindow)
-
-			// move to current workspace
-			_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
-
-			// set new monitor and workspace manually
-			monitor, _ := hypr.GetMonitorByWorkspace(activeWorkspace)
-			currentWindow.Workspace = *activeWorkspace
-			currentWindow.MonitorId = monitor.Id
-
-			// set size and position
-			err = hypr.SyncOutSizeAndPos(currentWindow)
-			if err != nil {
-				fmt.Printf("Error syncing size and position: %v\n", err)
-				return
-			}
-			_ = hypr.FocusWindow(*currentWindow)
+			err = fromOtherWorkspace(currentWindow, event.Name)
 		}
 	}
+}
+
+func toHiddenWorkspace(currentWindow *stateDto.Window, eventName string) error {
+	err := hypr.SyncInSizeAndPos(currentWindow)
+	if err != nil {
+		fmt.Printf("Error syncing size and position: %v\n", err)
+		return fmt.Errorf("error syncing size and poisition %w", err)
+	}
+	store.GetAppState().UpdateWindow(eventName, currentWindow)
+
+	// move to special workspace
+	return hypr.MoveWindowToWorkspace(currentWindow, specialWorkspaceName, true)
+}
+
+func fromHiddenWorkspace(currentWindow *stateDto.Window, eventName string) error {
+	activeWorkspace, err := hypr.GetActiveWorkSpace()
+	if err != nil {
+		return err
+	}
+	err = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+	if err != nil {
+		return err
+	}
+
+	memoryWindow, err := getMemoryWindow(store, eventName)
+	if err != nil {
+		return fmt.Errorf("failed to get window from memory: %w", err)
+	}
+
+	// set new monitor and workspace manually
+	monitor, _ := hypr.GetMonitorByWorkspace(activeWorkspace)
+	currentWindow.Workspace = *activeWorkspace
+	currentWindow.MonitorId = monitor.Id
+
+	// set size and position
+	err = hypr.SetSize(*currentWindow, memoryWindow.Size)
+	if err != nil {
+		return fmt.Errorf("error setting size: %w", err)
+	}
+	err = hypr.SetPosition(*currentWindow, memoryWindow.Position)
+	if err != nil {
+		return fmt.Errorf("error setting position: %w", err)
+	}
+	err = hypr.FocusWindow(*currentWindow)
+	if err == nil {
+		err = hypr.MoveWindowToTop(*currentWindow)
+	}
+	return err
+}
+
+func fromOtherWorkspace(currentWindow *stateDto.Window, eventName string) error {
+	// save size and position
+	err := hypr.SyncInSizeAndPos(currentWindow)
+	if err != nil {
+		return fmt.Errorf("error syncing size and position: %w", err)
+	}
+	store.GetAppState().UpdateWindow(eventName, currentWindow)
+
+	activeWorkspace, err := hypr.GetActiveWorkSpace()
+	if err != nil {
+		return fmt.Errorf("error sync size and position: %w", err)
+	}
+
+	// move to current workspace
+	_ = hypr.MoveWindowToWorkspace(currentWindow, activeWorkspace.Name, false)
+
+	// set new monitor and workspace manually
+	monitor, _ := hypr.GetMonitorByWorkspace(activeWorkspace)
+	currentWindow.Workspace = *activeWorkspace
+	currentWindow.MonitorId = monitor.Id
+
+	// set size and position
+	err = hypr.SyncOutSizeAndPos(currentWindow)
+	if err != nil {
+		return fmt.Errorf("error syncing size and position: %w", err)
+	}
+	err = hypr.FocusWindow(*currentWindow)
+	if err == nil {
+		err = hypr.MoveWindowToTop(*currentWindow)
+	}
+	return err
 }

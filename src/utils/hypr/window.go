@@ -197,7 +197,11 @@ func FocusWindow(window state.Window) error {
 		return err
 	}
 
-	cmd = exec.Command(
+	return nil
+}
+
+func MoveWindowToTop(window state.Window) error {
+	cmd := exec.Command(
 		"hyprctl",
 		"dispatch",
 		"alterzorder",

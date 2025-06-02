@@ -2,6 +2,7 @@ package core
 
 import (
 	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/logging"
 	"hyprpop/src/state"
 	"hyprpop/src/utils"
 )
@@ -16,6 +17,8 @@ func (a *App) RegisterListener(listener func(*state.GlobalConfig, chan pubsub.Ev
 }
 
 func Initialize() (*App, error) {
+	logging.SetupLogger()
+
 	// state
 	appState, err := state.InitState()
 	if err != nil {
