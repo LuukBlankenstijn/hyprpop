@@ -121,7 +121,7 @@ func GetRelativeSize(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	monitor, err := GetMonitorByWorkspace(&window.Workspace)
+	monitor, err := getMonitorById(window.MonitorId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
@@ -153,7 +153,7 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	monitor, err := GetMonitorByWorkspace(&window.Workspace)
+	monitor, err := getMonitorById(window.MonitorId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
@@ -262,7 +262,7 @@ func SetFloating(window *state.Window, floating bool) error {
 * Gets the global position of a window, and makes it local to the monitor it is on.
  */
 func makePositionLocal(window *state.Window) error {
-	monitor, err := GetMonitorByWorkspace(&window.Workspace)
+	monitor, err := getMonitorById(window.MonitorId)
 	if err != nil {
 		return fmt.Errorf("failed to get monitor: %w", err)
 	}
