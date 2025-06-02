@@ -3,12 +3,9 @@ package state
 import (
 	"fmt"
 	"hyprpop/src/dto/state"
-	"log"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v3"
 )
 
@@ -51,63 +48,6 @@ func loadConfig() error {
 		c.configState.updateWindowConfig(config)
 	}
 	return nil
-}
-
-func watchConfig() {
-	// create watcher
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Println("Error creating watcher:", err)
-		return
-	}
-
-	// defer close watcher
-	defer func() {
-		err := watcher.Close()
-		if err != nil {
-			log.Println("Error closing watcher:", err)
-		}
-	}()
-
-	// watch path to watch
-	err = watcher.Add(configPath)
-	if err != nil {
-		log.Println("Error watching file:", err)
-		return
-	}
-
-	// watch events
-	for {
-		select {
-		case event, ok := <-watcher.Events:
-			if !ok {
-				return
-			}
-			if event.Op&fsnotify.Rename == fsnotify.Rename {
-				// sleep to avoid file not found errors
-				time.Sleep(10 * time.Millisecond)
-				if err := loadConfig(); err != nil {
-					log.Println("Error reloading config:", err)
-				}
-				err = watcher.Add(configPath)
-				if err != nil {
-					log.Println("Error adding file to watcher:", err)
-					return
-				}
-			}
-			if event.Op&fsnotify.Write == fsnotify.Write {
-				log.Println("Config file changed, reloading...")
-				if err := loadConfig(); err != nil {
-					log.Println("Error reloading config:", err)
-				}
-			}
-		case err, ok := <-watcher.Errors:
-			if !ok {
-				return
-			}
-			log.Println("Watcher error:", err)
-		}
-	}
 }
 
 func validateState(config rawConfig) error {
