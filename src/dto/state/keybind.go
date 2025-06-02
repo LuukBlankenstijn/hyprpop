@@ -2,6 +2,7 @@ package state
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -72,4 +73,8 @@ func (k *Keybind) UnmarshalJSON(data []byte) error {
 	k.Key = raw.Key
 
 	return nil
+}
+
+func (k *Keybind) ToString() string {
+	return fmt.Sprintf("%s, %s,", k.Mod, k.Key)
 }

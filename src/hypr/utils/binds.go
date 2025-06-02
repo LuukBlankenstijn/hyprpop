@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hyprpop/src/dto/pubsub"
 	"hyprpop/src/dto/state"
+	"hyprpop/src/hypr/api"
 	"os/exec"
 	"strings"
 )
@@ -13,21 +14,10 @@ func RegisterKeybind(e pubsub.Event, keybind state.Keybind) error {
 	if isbound, _ := isBound(e, keybind); isbound {
 		return nil
 	}
-	k := fmt.Sprintf("%s, %s,", keybind.Mod, keybind.Key)
-	event := fmt.Sprintf("hyprpop:%s:%s", e.Type, e.Name)
-	cmd := exec.Command(
-		"hyprctl",
-		"keyword",
-		"bind",
-		k,
-		"event,",
-		event,
-	)
 
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("error creating keybind: %w", err)
-	}
-	return nil
+	err := api.RegisterKeybind(e.ToString(), keybind)
+
+	return err
 }
 
 func isBound(event pubsub.Event, keybind state.Keybind) (bool, error) {
