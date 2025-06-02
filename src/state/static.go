@@ -29,12 +29,12 @@ func (s *Config) GetWindowConfig(name string) (*state.WindowConfig, bool) {
 	return windowConfig, ok
 }
 
-func (s *Config) GetAllWindows() []state.WindowConfig {
+func (s *Config) GetAllWindows() []*state.WindowConfig {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	windows := make([]state.WindowConfig, 0, len(s.windowConfigs))
+	windows := make([]*state.WindowConfig, 0, len(s.windowConfigs))
 	for _, v := range s.windowConfigs {
-		windows = append(windows, *v)
+		windows = append(windows, v)
 	}
 	return windows
 }
