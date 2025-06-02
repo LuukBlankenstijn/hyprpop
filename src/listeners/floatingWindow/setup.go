@@ -5,31 +5,38 @@ import (
 	stateDto "hyprpop/src/dto/state"
 	"hyprpop/src/state"
 	"hyprpop/src/utils/hypr"
+	"log"
 	"time"
 )
 
 func setup(state *state.GlobalConfig) {
-	createWindows(state.GetConfigState().GetAllWindows(), state.GetAppState())
+	createWindows(state.GetAppState(), state.GetConfigState().GetAllWindows()...)
 }
 
 func createSingleWindow(window stateDto.WindowConfig, state *state.State) {
-	createWindows([]stateDto.WindowConfig{window}, state)
+	createWindows(state, &window)
 }
 
-func createWindows(windows []stateDto.WindowConfig, state *state.State) {
+func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
+	if err := validateWindows(windows); err != nil {
+		log.Fatal(err)
+	}
+	if err := processWindows(windows); err != nil {
+		fmt.Println(err)
+	}
 	pids := make(map[int]stateDto.WindowConfig)
 	// create windows
 	for _, window := range windows {
 		if window.Type != eventType {
 			continue
 		}
-		pid, err := createChromiumWindow(&window)
+		pid, err := createChromiumWindow(window)
 		if err != nil {
 			fmt.Println(err)
 			// TODO: log error
 			continue
 		}
-		pids[pid] = window
+		pids[pid] = *window
 	}
 
 	// sleep to allow hyprland to create the windows
@@ -74,4 +81,38 @@ func createWindows(windows []stateDto.WindowConfig, state *state.State) {
 		state.UpdateWindow(window.Name, createdWindow)
 		_ = hypr.MoveWindowToWorkspace(createdWindow, specialWorkspaceName, true)
 	}
+}
+
+func validateWindows(windows []*stateDto.WindowConfig) error {
+	for _, w := range windows {
+		if w.Size.X.Value < 0 || w.Size.Y.Value < 0 {
+			return fmt.Errorf("window %s cannot have size less then zero: %+v", w.Name, w.Size)
+		}
+	}
+	return nil
+}
+
+func processWindows(windows []*stateDto.WindowConfig) error {
+	monitor, err := hypr.GetActiveMonitor()
+	if err != nil {
+		return err
+	}
+
+	makeValuePositive := func(value *stateDto.VectorValue, windowSize int) {
+		if value.Value >= 0 {
+			return
+		}
+		if value.IsPercentage {
+			value.Value = 1 + value.Value
+		} else {
+			value.Value = float64(windowSize) + value.Value
+		}
+	}
+
+	for _, w := range windows {
+		makeValuePositive(&w.Position.X, monitor.GetWidth())
+		makeValuePositive(&w.Position.Y, monitor.GetHeight())
+	}
+
+	return nil
 }
