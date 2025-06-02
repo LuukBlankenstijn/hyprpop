@@ -1,84 +1,18 @@
-package hypr
+package utils
 
 import (
-	"encoding/json"
 	"fmt"
 	"hyprpop/src/dto/state"
+	"hyprpop/src/hypr/api"
 	"os/exec"
 )
 
-func getAllWindows() ([]state.Window, error) {
-	cmd := exec.Command("hyprctl", "clients", "-j")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute hyprctl: %w", err)
-	}
-
-	// Parse JSON output
-	var windows []state.Window
-	if err := json.Unmarshal(output, &windows); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %w", err)
-	}
-
-	return windows, nil
-}
-
-func GetActiveWindow() (*state.Window, error) {
-	cmd := exec.Command("hyprctl", "activewindow", "-j")
-	output, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute hyprctl: %w", err)
-	}
-
-	var window state.Window
-	if err := json.Unmarshal(output, &window); err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %w", err)
-	}
-
-	return &window, nil
-}
-
-func GetWindowByAddress(address string) (*state.Window, error) {
-	windows, err := getAllWindows()
-	if err != nil {
-		return nil, err
-	}
-	for _, window := range windows {
-		if window.Address == address {
-			return &window, nil
-		}
-	}
-	return nil, fmt.Errorf("window not found")
-}
-
-func GetWindowByName(name string) (*state.Window, error) {
-	windows, err := getAllWindows()
-	if err != nil {
-		return nil, err
-	}
-	for _, window := range windows {
-		if window.Class == name {
-			return &window, nil
-		}
-	}
-	return nil, fmt.Errorf("window not found")
-}
-
-func GetWindowByPid(pid int) (*state.Window, error) {
-	windows, err := getAllWindows()
-	if err != nil {
-		return nil, err
-	}
-	for _, window := range windows {
-		if window.Pid == pid {
-			return &window, nil
-		}
-	}
-	return nil, fmt.Errorf("window not found")
-}
-
 func SetSize(window state.Window, size state.Vec2) error {
-	x, y, err := getExactSize(size, window.MonitorId)
+	monitor, err := api.GetMonitorById(window.MonitorId)
+	if err != nil {
+		return err
+	}
+	x, y, err := size.GetExactSize(*monitor)
 	if err != nil {
 		return err
 	}
@@ -97,7 +31,11 @@ func SetSize(window state.Window, size state.Vec2) error {
 }
 
 func SetPosition(window state.Window, position state.Vec2) error {
-	x, y, err := getExactPosition(position, window)
+	monitor, err := api.GetMonitorById(window.MonitorId)
+	if err != nil {
+		return err
+	}
+	x, y, err := position.GetExactPosition(*monitor)
 	if err != nil {
 		return err
 	}
@@ -116,12 +54,12 @@ func SetPosition(window state.Window, position state.Vec2) error {
 }
 
 func GetRelativeSize(window state.Window) (*state.Vec2, error) {
-	hyprlandWindow, err := GetWindowByAddress(window.Address)
+	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	monitor, err := getMonitorById(window.MonitorId)
+	monitor, err := api.GetMonitorById(window.MonitorId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
@@ -148,12 +86,12 @@ func GetRelativeSize(window state.Window) (*state.Vec2, error) {
 }
 
 func GetRelativePosition(window state.Window) (*state.Vec2, error) {
-	hyprlandWindow, err := GetWindowByAddress(window.Address)
+	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
 	}
 
-	monitor, err := getMonitorById(window.MonitorId)
+	monitor, err := api.GetMonitorById(window.MonitorId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
@@ -181,37 +119,6 @@ func GetRelativePosition(window state.Window) (*state.Vec2, error) {
 	}
 
 	return &relativePosition, nil
-}
-
-/**
-* Give a window focus.
- */
-func FocusWindow(window state.Window) error {
-	cmd := exec.Command(
-		"hyprctl",
-		"dispatch",
-		"focuswindow",
-		"address:"+window.Address,
-	)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func MoveWindowToTop(window state.Window) error {
-	cmd := exec.Command(
-		"hyprctl",
-		"dispatch",
-		"alterzorder",
-		"top,",
-		"address:"+window.Address,
-	)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
 }
 
 /**
@@ -247,26 +154,10 @@ func SyncOutSizeAndPos(window *state.Window) error {
 }
 
 /**
-* Makes sets the window to float depending on floating
- */
-func SetFloating(window *state.Window, floating bool) error {
-	cmd := exec.Command(
-		"hyprctl",
-		"dispatch",
-		"setfloating",
-		"address:"+window.Address,
-	)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
-
-/**
 * Gets the global position of a window, and makes it local to the monitor it is on.
  */
 func makePositionLocal(window *state.Window) error {
-	monitor, err := getMonitorById(window.MonitorId)
+	monitor, err := api.GetMonitorById(window.MonitorId)
 	if err != nil {
 		return fmt.Errorf("failed to get monitor: %w", err)
 	}
