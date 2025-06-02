@@ -32,8 +32,6 @@ func InitState() (*GlobalConfig, error) {
 		return nil, err
 	}
 
-	go watchConfig()
-
 	intialized = true
 	return &c, nil
 }
