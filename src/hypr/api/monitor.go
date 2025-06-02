@@ -1,4 +1,4 @@
-package hypr
+package api
 
 import (
 	"encoding/json"
@@ -51,7 +51,7 @@ func GetMonitorByWorkspace(workspace *state.Workspace) (*state.Monitor, error) {
 	return nil, fmt.Errorf("no monitor with workspace %s found", workspace.Name)
 }
 
-func getMonitorById(id int) (*state.Monitor, error) {
+func GetMonitorById(id int) (*state.Monitor, error) {
 	cmd := exec.Command("hyprctl", "monitors", "-j")
 	output, err := cmd.Output()
 	if err != nil {

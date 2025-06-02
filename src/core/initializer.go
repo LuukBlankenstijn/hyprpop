@@ -2,13 +2,13 @@ package core
 
 import (
 	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/logging"
 	"hyprpop/src/state"
-	"hyprpop/src/utils"
 )
 
 type App struct {
 	State  *state.GlobalConfig
-	PubSub *utils.PubSub
+	PubSub *PubSub
 }
 
 func (a *App) RegisterListener(listener func(*state.GlobalConfig, chan pubsub.Event)) {
@@ -16,6 +16,8 @@ func (a *App) RegisterListener(listener func(*state.GlobalConfig, chan pubsub.Ev
 }
 
 func Initialize() (*App, error) {
+	logging.SetupLogger()
+
 	// state
 	appState, err := state.InitState()
 	if err != nil {
@@ -23,7 +25,7 @@ func Initialize() (*App, error) {
 	}
 
 	// pubsub
-	pubSub := utils.NewPubSub()
+	pubSub := NewPubSub()
 
 	// hpyrsocket listener
 	go Listen(pubSub)

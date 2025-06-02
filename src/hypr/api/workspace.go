@@ -1,4 +1,4 @@
-package hypr
+package api
 
 import (
 	"encoding/json"
@@ -20,26 +20,4 @@ func GetActiveWorkSpace() (*state.Workspace, error) {
 	}
 
 	return &workspace, nil
-}
-
-func MoveWindowToWorkspace(window *state.Window, workspace string, silent bool) error {
-	windowId := fmt.Sprintf("address:%s", window.Address)
-	var command string
-	if silent {
-		command = "movetoworkspacesilent"
-	} else {
-		command = "movetoworkspace"
-	}
-	cmd := exec.Command(
-		"hyprctl",
-		"dispatch",
-		command,
-		workspace+",",
-		windowId,
-	)
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-	return nil
 }
