@@ -1,7 +1,6 @@
 package floatingwindow
 
 import (
-	"fmt"
 	stateDto "hyprpop/src/dto/state"
 	hyprapi "hyprpop/src/hypr/api"
 	hyprutils "hyprpop/src/hypr/utils"
@@ -30,9 +29,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 	if err := validateWindows(windows); err != nil {
 		logging.Fatal("could not validate config windows: %w", err)
 	}
-	if err := processWindows(windows); err != nil {
-		fmt.Println(err)
-	}
+
 	pids := make(map[int]stateDto.WindowConfig)
 	// create windows
 	for _, window := range windows {
@@ -54,7 +51,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 	for pid, window := range pids {
 		createdWindow, err := hyprapi.GetWindowByPid(pid)
 		if err != nil {
-			time.Sleep(2 * time.Second)
+			time.Sleep(4 * time.Second)
 			createdWindow, err = hyprapi.GetWindowByPid(pid)
 			if err != nil {
 				logging.Warn("failed to get window by PID: %+v", err)
@@ -76,7 +73,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 			logging.Warn("failed to set window position: %+v", err)
 			continue
 		}
-		err = hyprutils.SyncInSizeAndPos(createdWindow)
+		err = hyprutils.SyncInSizeAndPos(createdWindow, &window.Size, &window.Position)
 		if err != nil {
 			logging.Warn("failed to save window state to memory")
 			return
@@ -92,34 +89,9 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 
 func validateWindows(windows []*stateDto.WindowConfig) error {
 	for _, w := range windows {
-		if w.Size.X.Value < 0 || w.Size.Y.Value < 0 {
-			return fmt.Errorf("window %s cannot have size less then zero: %+v", w.Name, w.Size)
+		if w.Size.X.IsNegative || w.Size.Y.IsNegative {
+			logging.Fatal("window %s cannot have size less then zero: %+v", nil, w.Name, w.Size)
 		}
 	}
-	return nil
-}
-
-func processWindows(windows []*stateDto.WindowConfig) error {
-	monitor, err := hyprapi.GetActiveMonitor()
-	if err != nil {
-		return err
-	}
-
-	makeValuePositive := func(value *stateDto.VectorValue, windowSize int) {
-		if value.Value >= 0 {
-			return
-		}
-		if value.IsPercentage {
-			value.Value = 1 + value.Value
-		} else {
-			value.Value = float64(windowSize) + value.Value
-		}
-	}
-
-	for _, w := range windows {
-		makeValuePositive(&w.Position.X, monitor.GetWidth())
-		makeValuePositive(&w.Position.Y, monitor.GetHeight())
-	}
-
 	return nil
 }

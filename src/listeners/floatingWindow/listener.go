@@ -90,7 +90,7 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 			return
 		}
 		if activeWindow.Address == currentWindow.Address {
-			err = toHiddenWorkspace(currentWindow, event.Name)
+			err = toHiddenWorkspace(currentWindow, event.Name, *memoryWindow)
 		} else {
 			_ = hyprapi.FocusWindow(*currentWindow)
 			err = hyprapi.MoveWindowToTop(*currentWindow)
@@ -99,13 +99,13 @@ func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
 		if currentWindow.Workspace.Name == specialWorkspaceName {
 			err = fromHiddenWorkspace(currentWindow, event.Name)
 		} else {
-			err = fromOtherWorkspace(currentWindow, event.Name)
+			err = fromOtherWorkspace(currentWindow, event.Name, *memoryWindow)
 		}
 	}
 }
 
-func toHiddenWorkspace(currentWindow *stateDto.Window, eventName string) error {
-	err := hyprutils.SyncInSizeAndPos(currentWindow)
+func toHiddenWorkspace(currentWindow *stateDto.Window, eventName string, memoryWindow stateDto.Window) error {
+	err := hyprutils.SyncInSizeAndPos(currentWindow, &memoryWindow.Size, &memoryWindow.Position)
 	if err != nil {
 		fmt.Printf("Error syncing size and position: %v\n", err)
 		return fmt.Errorf("error syncing size and poisition %w", err)
@@ -152,9 +152,9 @@ func fromHiddenWorkspace(currentWindow *stateDto.Window, eventName string) error
 	return err
 }
 
-func fromOtherWorkspace(currentWindow *stateDto.Window, eventName string) error {
+func fromOtherWorkspace(currentWindow *stateDto.Window, eventName string, memoryWindow stateDto.Window) error {
 	// save size and position
-	err := hyprutils.SyncInSizeAndPos(currentWindow)
+	err := hyprutils.SyncInSizeAndPos(currentWindow, &memoryWindow.Size, &memoryWindow.Position)
 	if err != nil {
 		return fmt.Errorf("error syncing size and position: %w", err)
 	}
