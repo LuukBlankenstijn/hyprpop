@@ -29,7 +29,6 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 	if err := validateWindows(windows); err != nil {
 		logging.Fatal("could not validate config windows: %w", err)
 	}
-	processWindows(windows)
 
 	pids := make(map[int]stateDto.WindowConfig)
 	// create windows
@@ -52,7 +51,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 	for pid, window := range pids {
 		createdWindow, err := hyprapi.GetWindowByPid(pid)
 		if err != nil {
-			time.Sleep(2 * time.Second)
+			time.Sleep(4 * time.Second)
 			createdWindow, err = hyprapi.GetWindowByPid(pid)
 			if err != nil {
 				logging.Warn("failed to get window by PID: %+v", err)
@@ -74,7 +73,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 			logging.Warn("failed to set window position: %+v", err)
 			continue
 		}
-		err = hyprutils.SyncInSizeAndPos(createdWindow)
+		err = hyprutils.SyncInSizeAndPos(createdWindow, &window.Size, &window.Position)
 		if err != nil {
 			logging.Warn("failed to save window state to memory")
 			return
@@ -95,10 +94,4 @@ func validateWindows(windows []*stateDto.WindowConfig) error {
 		}
 	}
 	return nil
-}
-
-func processWindows(windows []*stateDto.WindowConfig) {
-	for _, w := range windows {
-		logging.Info("window: %+v", w)
-	}
 }

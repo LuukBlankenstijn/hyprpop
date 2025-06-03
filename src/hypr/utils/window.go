@@ -56,7 +56,7 @@ func SetPosition(window stateDto.Window, position stateDto.Vec2) error {
 	return nil
 }
 
-func GetSize(window stateDto.Window) (*stateDto.Vec2, error) {
+func GetSize(window stateDto.Window, memorySize stateDto.Vec2) (*stateDto.Vec2, error) {
 	// get hyprland objects
 	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
@@ -70,12 +70,8 @@ func GetSize(window stateDto.Window) (*stateDto.Vec2, error) {
 
 	// get X
 	var x stateDto.VectorValue
-	if !window.Size.X.IsPercentage {
-		x = stateDto.VectorValue{
-			Value:        hyprlandWindow.Size.X.Value,
-			IsPercentage: false,
-			IsNegative:   false,
-		}
+	if !memorySize.X.IsPercentage {
+		x = memorySize.X
 	} else {
 		x = stateDto.VectorValue{
 			Value:        hyprlandWindow.Size.X.Value / float64(monitor.GetWidth()),
@@ -86,12 +82,8 @@ func GetSize(window stateDto.Window) (*stateDto.Vec2, error) {
 
 	// get y
 	var y stateDto.VectorValue
-	if !window.Size.Y.IsPercentage {
-		y = stateDto.VectorValue{
-			Value:        hyprlandWindow.Size.Y.Value,
-			IsPercentage: false,
-			IsNegative:   false,
-		}
+	if !memorySize.Y.IsPercentage {
+		y = memorySize.Y
 	} else {
 		y = stateDto.VectorValue{
 			Value:        hyprlandWindow.Size.Y.Value / float64(monitor.GetHeight()),
@@ -106,7 +98,8 @@ func GetSize(window stateDto.Window) (*stateDto.Vec2, error) {
 	}, nil
 }
 
-func GetPosition(window stateDto.Window) (*stateDto.Vec2, error) {
+func GetPosition(window stateDto.Window, memoryPosition stateDto.Vec2) (*stateDto.Vec2, error) {
+	// get hyprland objects
 	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
@@ -117,41 +110,70 @@ func GetPosition(window stateDto.Window) (*stateDto.Vec2, error) {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
 
+	// normalize position
 	if err = makePositionLocal(hyprlandWindow); err != nil {
 		return nil, fmt.Errorf("failed to localize position: %w", err)
 	}
 
-	relativePosition := stateDto.Vec2{
-		X: stateDto.VectorValue{
+	// get X
+	var x stateDto.VectorValue
+	if !memoryPosition.X.IsPercentage {
+		x = memoryPosition.X
+	} else {
+		x = stateDto.VectorValue{
 			Value:        hyprlandWindow.Position.X.Value / float64(monitor.GetWidth()),
-			IsPercentage: hyprlandWindow.Position.X.Value < float64(monitor.GetWidth()),
-		},
-		Y: stateDto.VectorValue{
+			IsPercentage: true,
+			IsNegative:   false,
+		}
+	}
+
+	// get y
+	var y stateDto.VectorValue
+	if !memoryPosition.Y.IsPercentage {
+		y = memoryPosition.Y
+	} else {
+		y = stateDto.VectorValue{
 			Value:        hyprlandWindow.Position.Y.Value / float64(monitor.GetHeight()),
-			IsPercentage: hyprlandWindow.Position.Y.Value < float64(monitor.GetHeight()),
-		},
+			IsPercentage: true,
+			IsNegative:   false,
+		}
 	}
 
-	if !relativePosition.X.IsPercentage {
-		relativePosition.X.Value = hyprlandWindow.Size.X.Value
-	}
-	if !relativePosition.Y.IsPercentage {
-		relativePosition.Y.Value = hyprlandWindow.Size.Y.Value
-	}
-
-	return &relativePosition, nil
+	return &stateDto.Vec2{
+		X: x,
+		Y: y,
+	}, nil
+	// relativePosition := stateDto.Vec2{
+	// 	X: stateDto.VectorValue{
+	// 		Value:        hyprlandWindow.Position.X.Value / float64(monitor.GetWidth()),
+	// 		IsPercentage: hyprlandWindow.Position.X.Value < float64(monitor.GetWidth()),
+	// 	},
+	// 	Y: stateDto.VectorValue{
+	// 		Value:        hyprlandWindow.Position.Y.Value / float64(monitor.GetHeight()),
+	// 		IsPercentage: hyprlandWindow.Position.Y.Value < float64(monitor.GetHeight()),
+	// 	},
+	// }
+	//
+	// if !relativePosition.X.IsPercentage {
+	// 	relativePosition.X.Value = hyprlandWindow.Size.X.Value
+	// }
+	// if !relativePosition.Y.IsPercentage {
+	// 	relativePosition.Y.Value = hyprlandWindow.Size.Y.Value
+	// }
+	//
+	// return &relativePosition, nil
 }
 
 /**
 * Loads the current size and position from the hyprctl api into the window object
  */
-func SyncInSizeAndPos(window *stateDto.Window) error {
-	newSize, err := GetSize(*window)
+func SyncInSizeAndPos(window *stateDto.Window, memorySize *stateDto.Vec2, memoryPosition *stateDto.Vec2) error {
+	newSize, err := GetSize(*window, *memorySize)
 	if err != nil {
 		return fmt.Errorf("error getting size: %v", err)
 	}
 	window.Size = *newSize
-	newPosition, err := GetPosition(*window)
+	newPosition, err := GetPosition(*window, *memoryPosition)
 	if err != nil {
 		fmt.Printf("error getting position: %v", err)
 	}

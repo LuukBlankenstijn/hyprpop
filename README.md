@@ -69,9 +69,9 @@ windows:
 
 - **name**: Unique identifier (no duplicates allowed)
 - **type**: Window type (`"floating"` only for now)
-- **startCommand**: Any web URL or command to start an app - if startCommand is an url, creates a browser window with that url - otherwise, starts the app
+- **startCommand**: Any web URL or command to start an app - if startCommand is an url, creates a browser window with that url. Otherwise, starts the app
 - **keybind**: Hyprland format - `MOD+key` or `MOD+key`
-- **position/size**: `[x, y]` as decimals (0.0-1.0) for percentages or integers for pixels
+- **position/size**: `[x, y]` as decimals (0.0-1.0) for percentages or integers for pixels. Percentages will scale between montors, integers are constant.
 
 ## Usage
 
