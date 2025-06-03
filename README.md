@@ -1,6 +1,6 @@
 # HyprPop
 
-Toggle floating windows in Hyprland with keybindings. Any web application is supported.
+Toggle floating windows in Hyprland with keybindings. Any app or web application is supported.
 
 ## Features
 
@@ -36,24 +36,31 @@ Create `~/.config/hypr/hyprpop.yaml`:
 
 ```yaml
 windows:
-  - name: "youtube" # Unique window name (becomes Chromium class)
+  - name: "youtube" # Unique window name
     type: "floating" # Currently only "floating" supported
-    url: "https://youtube.com" # Web URL to open
+    startCommand: "https://youtube.com" # Web URL to open or app to run
     keybind: "SUPER+Y" # Hyprland keybind format
     position: [0.1, 0.1] # [x, y] - percentages (0.0-1.0) or pixels
     size: [0.8, 0.8] # [width, height]
 
   - name: "spotify"
     type: "floating"
-    url: "https://open.spotify.com"
+    startCommand: "https://open.spotify.com"
     keybind: "SUPER+S" # Modifiers: SUPER, SHIFT, CTRL, ALT
     position: [200, 100] # Absolute pixels
     size: [1200, 800]
 
   - name: "chatgpt"
     type: "floating"
-    url: "https://chat.openai.com"
+    startCommand: "https://chat.openai.com"
     keybind: "SUPER+C"
+    position: [0.2, 0.1] # Mix percentages and pixels
+    size: [0.6, 600]
+
+  - name: "signal"
+    type: "floating"
+    startCommand: "sigal-desktop"
+    keybind: "SUPER+S"
     position: [0.2, 0.1] # Mix percentages and pixels
     size: [0.6, 600]
 ```
@@ -62,7 +69,7 @@ windows:
 
 - **name**: Unique identifier (no duplicates allowed)
 - **type**: Window type (`"floating"` only for now)
-- **url**: Any web URL - creates Chromium app window with isolated profile
+- **startCommand**: Any web URL or command to start an app - if startCommand is an url, creates a browser window with that url - otherwise, starts the app
 - **keybind**: Hyprland format - `MOD+key` or `MOD+key`
 - **position/size**: `[x, y]` as decimals (0.0-1.0) for percentages or integers for pixels
 
@@ -71,6 +78,7 @@ windows:
 1. Install and configure (see above)
 
 2. Add to Hyprland config to auto-start:
+   make sure to put it somewhere in the beginning because it takes some time to start up
 
 ```bash
 # ~/.config/hypr/hyprland.conf

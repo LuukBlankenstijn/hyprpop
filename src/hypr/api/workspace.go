@@ -21,3 +21,12 @@ func GetActiveWorkSpace() (*state.Workspace, error) {
 
 	return &workspace, nil
 }
+
+func FocusWorkspace(workspace state.Workspace) error {
+	cmd := exec.Command("hyprctl", "dispatch", "workspace", workspace.Name)
+	_, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to execute hyprctl: %w", err)
+	}
+	return nil
+}
