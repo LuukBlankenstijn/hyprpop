@@ -52,18 +52,34 @@ func (position *Vec2) GetExactPosition(monitor Monitor) (string, string, error) 
 	// X value
 	v := position.X
 	if v.IsPercentage {
-		pixels = int(v.Value * float64(monitor.GetWidth()))
+		var value = v.Value
+		if v.IsNegative {
+			value = 1 - value
+		}
+		pixels = int(value * float64(monitor.GetWidth()))
 	} else {
-		pixels = int(v.Value)
+		if !v.IsNegative {
+			pixels = int(v.Value)
+		} else {
+			pixels = monitor.GetWidth() - int(v.Value)
+		}
 	}
 	x := strconv.Itoa(pixels + monitor.X)
 
 	// Y value
 	v = position.Y
 	if v.IsPercentage {
-		pixels = int(v.Value * float64(monitor.GetHeight()))
+		var value = v.Value
+		if v.IsNegative {
+			value = 1 - value
+		}
+		pixels = int(value * float64(monitor.GetHeight()))
 	} else {
-		pixels = int(v.Value)
+		if !v.IsNegative {
+			pixels = int(v.Value)
+		} else {
+			pixels = monitor.GetHeight() - int(v.Value)
+		}
 	}
 	y := strconv.Itoa(pixels + monitor.Y)
 	return x, y, nil

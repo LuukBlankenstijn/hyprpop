@@ -30,9 +30,8 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 	if err := validateWindows(windows); err != nil {
 		logging.Fatal("could not validate config windows: %w", err)
 	}
-	if err := processWindows(windows); err != nil {
-		fmt.Println(err)
-	}
+	processWindows(windows)
+
 	pids := make(map[int]stateDto.WindowConfig)
 	// create windows
 	for _, window := range windows {
@@ -92,34 +91,15 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 
 func validateWindows(windows []*stateDto.WindowConfig) error {
 	for _, w := range windows {
-		if w.Size.X.Value < 0 || w.Size.Y.Value < 0 {
-			return fmt.Errorf("window %s cannot have size less then zero: %+v", w.Name, w.Size)
+		if w.Size.X.IsNegative || w.Size.Y.IsNegative {
+			logging.Fatal("window %s cannot have size less then zero: %+v", nil, w.Name, w.Size)
 		}
 	}
 	return nil
 }
 
-func processWindows(windows []*stateDto.WindowConfig) error {
-	monitor, err := hyprapi.GetActiveMonitor()
-	if err != nil {
-		return err
-	}
-
-	makeValuePositive := func(value *stateDto.VectorValue, windowSize int) {
-		if value.Value >= 0 {
-			return
-		}
-		if value.IsPercentage {
-			value.Value = 1 + value.Value
-		} else {
-			value.Value = float64(windowSize) + value.Value
-		}
-	}
-
+func processWindows(windows []*stateDto.WindowConfig) {
 	for _, w := range windows {
-		makeValuePositive(&w.Position.X, monitor.GetWidth())
-		makeValuePositive(&w.Position.Y, monitor.GetHeight())
+		logging.Info("window: %+v", w)
 	}
-
-	return nil
 }
