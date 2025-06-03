@@ -51,19 +51,6 @@ func GetWindowByAddress(address string) (*state.Window, error) {
 	return nil, fmt.Errorf("window not found")
 }
 
-func GetWindowByName(name string) (*state.Window, error) {
-	windows, err := getAllWindows()
-	if err != nil {
-		return nil, err
-	}
-	for _, window := range windows {
-		if window.Class == name {
-			return &window, nil
-		}
-	}
-	return nil, fmt.Errorf("window not found")
-}
-
 func GetWindowByPid(pid int) (*state.Window, error) {
 	windows, err := getAllWindows()
 	if err != nil {

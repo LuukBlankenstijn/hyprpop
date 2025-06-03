@@ -51,6 +51,9 @@ func getMemoryWindow(store *state.GlobalConfig, name string) (*stateDto.Window, 
 		}
 		createSingleWindow(*windowConfig, state)
 		window = state.GetWindow(name)
+		if window == nil {
+			return nil, fmt.Errorf("could not find or create window")
+		}
 	}
 	return window, nil
 }

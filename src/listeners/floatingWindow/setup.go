@@ -7,7 +7,6 @@ import (
 	hyprutils "hyprpop/src/hypr/utils"
 	"hyprpop/src/logging"
 	"hyprpop/src/state"
-	"log"
 	"time"
 )
 
@@ -20,8 +19,16 @@ func createSingleWindow(window stateDto.WindowConfig, state *state.State) {
 }
 
 func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
+	workspace, err := hyprapi.GetActiveWorkSpace()
+	if err != nil {
+		logging.Warn("Failed to get active workspace: %+v", err)
+	}
+	defer func() {
+		_ = hyprapi.FocusWorkspace(*workspace)
+	}()
+
 	if err := validateWindows(windows); err != nil {
-		log.Fatal(err)
+		logging.Fatal("could not validate config windows: %w", err)
 	}
 	if err := processWindows(windows); err != nil {
 		fmt.Println(err)
@@ -32,7 +39,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 		if window.Type != eventType {
 			continue
 		}
-		pid, err := createChromiumWindow(window)
+		pid, err := createWindow(window)
 		if err != nil {
 			logging.Error("Failed to created window: %w", err)
 			continue
@@ -47,8 +54,7 @@ func createWindows(state *state.State, windows ...*stateDto.WindowConfig) {
 	for pid, window := range pids {
 		createdWindow, err := hyprapi.GetWindowByPid(pid)
 		if err != nil {
-			fmt.Println(err)
-			time.Sleep(1 * time.Second)
+			time.Sleep(2 * time.Second)
 			createdWindow, err = hyprapi.GetWindowByPid(pid)
 			if err != nil {
 				logging.Warn("failed to get window by PID: %+v", err)
