@@ -1,7 +1,6 @@
 package floatingwindow
 
 import (
-	"fmt"
 	stateDto "hyprpop/src/dto/state"
 	hyprapi "hyprpop/src/hypr/api"
 	hyprutils "hyprpop/src/hypr/utils"

@@ -56,7 +56,8 @@ func SetPosition(window stateDto.Window, position stateDto.Vec2) error {
 	return nil
 }
 
-func GetRelativeSize(window stateDto.Window) (*stateDto.Vec2, error) {
+func GetSize(window stateDto.Window) (*stateDto.Vec2, error) {
+	// get hyprland objects
 	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
@@ -67,28 +68,45 @@ func GetRelativeSize(window stateDto.Window) (*stateDto.Vec2, error) {
 		return nil, fmt.Errorf("failed to get monitor: %w", err)
 	}
 
-	relativeSize := stateDto.Vec2{
-		X: stateDto.VectorValue{
+	// get X
+	var x stateDto.VectorValue
+	if !window.Size.X.IsPercentage {
+		x = stateDto.VectorValue{
+			Value:        hyprlandWindow.Size.X.Value,
+			IsPercentage: false,
+			IsNegative:   false,
+		}
+	} else {
+		x = stateDto.VectorValue{
 			Value:        hyprlandWindow.Size.X.Value / float64(monitor.GetWidth()),
-			IsPercentage: hyprlandWindow.Size.X.Value < float64(monitor.GetWidth()),
-		},
-		Y: stateDto.VectorValue{
+			IsPercentage: true,
+			IsNegative:   false,
+		}
+	}
+
+	// get y
+	var y stateDto.VectorValue
+	if !window.Size.Y.IsPercentage {
+		y = stateDto.VectorValue{
+			Value:        hyprlandWindow.Size.Y.Value,
+			IsPercentage: false,
+			IsNegative:   false,
+		}
+	} else {
+		y = stateDto.VectorValue{
 			Value:        hyprlandWindow.Size.Y.Value / float64(monitor.GetHeight()),
-			IsPercentage: hyprlandWindow.Size.Y.Value < float64(monitor.GetHeight()),
-		},
+			IsPercentage: true,
+			IsNegative:   false,
+		}
 	}
 
-	if !relativeSize.X.IsPercentage {
-		relativeSize.X.Value = hyprlandWindow.Size.X.Value
-	}
-	if !relativeSize.Y.IsPercentage {
-		relativeSize.Y.Value = hyprlandWindow.Size.Y.Value
-	}
-
-	return &relativeSize, nil
+	return &stateDto.Vec2{
+		X: x,
+		Y: y,
+	}, nil
 }
 
-func GetRelativePosition(window stateDto.Window) (*stateDto.Vec2, error) {
+func GetPosition(window stateDto.Window) (*stateDto.Vec2, error) {
 	hyprlandWindow, err := api.GetWindowByAddress(window.Address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get window by address: %w", err)
@@ -128,15 +146,15 @@ func GetRelativePosition(window stateDto.Window) (*stateDto.Vec2, error) {
 * Loads the current size and position from the hyprctl api into the window object
  */
 func SyncInSizeAndPos(window *stateDto.Window) error {
-	newSize, err := GetRelativeSize(*window)
+	newSize, err := GetSize(*window)
 	if err != nil {
 		return fmt.Errorf("error getting size: %v", err)
 	}
-	newPosition, err := GetRelativePosition(*window)
+	window.Size = *newSize
+	newPosition, err := GetPosition(*window)
 	if err != nil {
 		fmt.Printf("error getting position: %v", err)
 	}
-	window.Size = *newSize
 	window.Position = *newPosition
 	return nil
 }
