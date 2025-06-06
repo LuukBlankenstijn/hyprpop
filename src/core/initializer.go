@@ -1,7 +1,7 @@
 package core
 
 import (
-	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/core/pubsub"
 	"hyprpop/src/logging"
 	"hyprpop/src/state"
 )
@@ -11,8 +11,8 @@ type App struct {
 	PubSub *PubSub
 }
 
-func (a *App) RegisterListener(listener func(*state.GlobalConfig, chan pubsub.Event)) {
-	go listener(a.State, a.PubSub.Subscribe(10))
+func (a *App) RegisterListener(listener func(*state.GlobalConfig)) {
+	go listener(a.State)
 }
 
 func Initialize() (*App, error) {
@@ -25,13 +25,12 @@ func Initialize() (*App, error) {
 	}
 
 	// pubsub
-	pubSub := NewPubSub()
+	pubsub.Initialize()
 
 	// hpyrsocket listener
-	go Listen(pubSub)
+	go Listen()
 
 	return &App{
-		State:  appState,
-		PubSub: pubSub,
+		State: appState,
 	}, nil
 }
