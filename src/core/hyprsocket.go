@@ -2,22 +2,23 @@ package core
 
 import (
 	"fmt"
-	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/core/pubsub"
+	pubsubDto "hyprpop/src/dto/pubsub"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func Listen(writer pubsub.PubSubWriter) {
+func Listen() {
 	socketPath, err := getSocketPath()
 	if err != nil {
 		panic(err)
 	}
-	listenEvents(socketPath, writer)
+	listenEvents(socketPath)
 }
 
-func listenEvents(path string, writer pubsub.PubSubWriter) {
+func listenEvents(path string) {
 	for {
 		// Connect to the Unix domain socket
 		conn, err := net.Dial("unix", path)
@@ -43,12 +44,12 @@ func listenEvents(path string, writer pubsub.PubSubWriter) {
 			if !valid {
 				continue
 			}
-			writer.Publish(*event)
+			pubsub.Publish(*event)
 		}
 	}
 }
 
-func parseEvent(input string) (*pubsub.Event, bool) {
+func parseEvent(input string) (*pubsubDto.Event, bool) {
 	parts := strings.Split(input, ">>")
 	if len(parts) < 2 || parts[0] != "custom" || !strings.HasPrefix(parts[1], "hyprpop") {
 		return nil, false
@@ -60,7 +61,7 @@ func parseEvent(input string) (*pubsub.Event, bool) {
 	if len(parts) != 2 {
 		return nil, false
 	}
-	var e = pubsub.Event{
+	var e = pubsubDto.Event{
 		Type: parts[0],
 		Name: parts[1],
 	}

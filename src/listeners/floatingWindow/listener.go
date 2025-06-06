@@ -3,7 +3,8 @@ package floatingwindow
 import (
 	"fmt"
 	"hyprpop/src/core"
-	"hyprpop/src/dto/pubsub"
+	"hyprpop/src/core/pubsub"
+	pubsubDto "hyprpop/src/dto/pubsub"
 	stateDto "hyprpop/src/dto/state"
 	hyprapi "hyprpop/src/hypr/api"
 	hyprutils "hyprpop/src/hypr/utils"
@@ -18,14 +19,18 @@ const (
 
 var store *state.GlobalConfig
 
-func StartListening(state *state.GlobalConfig, channel chan pubsub.Event) {
+func StartListening(state *state.GlobalConfig) {
 	store = state
 	registerKeybinds(state.GetConfigState())
 	setup(state)
-	listen(state, channel)
+	listen(state)
 }
 
-func listen(store *state.GlobalConfig, channel chan pubsub.Event) {
+func listen(store *state.GlobalConfig) {
+	channel := pubsub.Subscribe(10)
+	defer func() {
+		pubsub.Unsubscribe(channel)
+	}()
 
 	state := store.GetAppState()
 	for event := range channel {
@@ -58,7 +63,7 @@ func getMemoryWindow(store *state.GlobalConfig, name string) (*stateDto.Window, 
 	return window, nil
 }
 
-func handleEvent(store *state.GlobalConfig, event pubsub.Event) {
+func handleEvent(store *state.GlobalConfig, event pubsubDto.Event) {
 	// get the window from the state, or create it if it doesn't exist
 	memoryWindow, err := getMemoryWindow(store, event.Name)
 	if err != nil {
