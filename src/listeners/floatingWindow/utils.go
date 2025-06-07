@@ -9,7 +9,7 @@ import (
 
 const ChromiumProfileDir = ".config/hypr/hyprpop/chromium/floatingChromium"
 
-func createWindow(window *state.WindowConfig) (int, error) {
+func createHyprWindow(window *state.WindowConfig) (int, error) {
 	if window.IsNative() {
 		return createNativeWindow(window)
 	} else {

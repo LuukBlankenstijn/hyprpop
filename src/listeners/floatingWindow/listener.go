@@ -21,9 +21,9 @@ var store *state.GlobalConfig
 
 func StartListening(state *state.GlobalConfig) {
 	store = state
-	registerKeybinds(state.GetConfigState())
+	_ = deregisterKeybinds()
+	go listen(state)
 	setup(state)
-	listen(state)
 }
 
 func listen(store *state.GlobalConfig) {
