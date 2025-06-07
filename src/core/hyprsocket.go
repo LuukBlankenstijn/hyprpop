@@ -50,6 +50,26 @@ func listenEvents(path string) {
 }
 
 func parseEvent(input string) (*pubsubDto.Event, bool) {
+	event, valid := parseHyprEvent(input)
+	if valid {
+		return event, valid
+	}
+	return parseNewWindowEvent(input)
+
+}
+
+func parseNewWindowEvent(input string) (*pubsubDto.Event, bool) {
+	parts := strings.Split(input, ">>")
+	if len(parts) < 2 || parts[0] != "openwindow" {
+		return nil, false
+	}
+	return &pubsubDto.Event{
+		Type: "openwindow",
+		Name: parts[1],
+	}, true
+}
+
+func parseHyprEvent(input string) (*pubsubDto.Event, bool) {
 	parts := strings.Split(input, ">>")
 	if len(parts) < 2 || parts[0] != "custom" || !strings.HasPrefix(parts[1], "hyprpop") {
 		return nil, false
