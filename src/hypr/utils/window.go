@@ -44,6 +44,7 @@ func SetPosition(window stateDto.Window, position stateDto.Vec2) error {
 	}
 	cmd := exec.Command("hyprctl",
 		"dispatch",
+		"--",
 		"movewindowpixel",
 		"exact",
 		x,
