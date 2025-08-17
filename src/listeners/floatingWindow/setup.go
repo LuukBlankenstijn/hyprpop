@@ -8,7 +8,6 @@ import (
 	"hyprpop/src/logging"
 	"hyprpop/src/state"
 	"sync"
-	"time"
 )
 
 func setup(state *state.GlobalConfig) {
@@ -33,48 +32,40 @@ func createWindow(window *stateDto.WindowConfig, state *state.State, wg *sync.Wa
 		return
 	}
 
-	timeout := time.After(5 * time.Second)
-
 channelLoop:
 	for range channel {
-		select {
-		case <-timeout:
-			logging.Warn("timeout for creating reached, window %+v not created", window)
-			return
-		default:
-			createdWindow, err := hyprapi.GetWindowByPid(pid)
-			if err != nil {
-				continue
-			}
-
-			err = hyprapi.SetFloating(createdWindow, true)
-			if err != nil {
-				logging.Warn("failed to set window floating: %+v", err)
-				return
-			}
-			err = hyprutils.SetSize(*createdWindow, window.Size)
-			if err != nil {
-				logging.Warn("failed to set window size: %+v", err)
-				return
-			}
-			err = hyprutils.SetPosition(*createdWindow, window.Position)
-			if err != nil {
-				logging.Warn("failed to set window position: %+v", err)
-				return
-			}
-			err = hyprutils.SyncInSizeAndPos(createdWindow, &window.Size, &window.Position)
-			if err != nil {
-				logging.Warn("failed to save window state to memory")
-				return
-			}
-			state.UpdateWindow(window.Name, createdWindow)
-			err = hyprutils.MoveWindowToWorkspace(createdWindow, specialWorkspaceName, true)
-			if err != nil {
-				logging.Warn("failed to move window to hidden workspace")
-				return
-			}
-			break channelLoop
+		createdWindow, err := hyprapi.GetWindowByPid(pid)
+		if err != nil {
+			continue
 		}
+
+		err = hyprapi.SetFloating(createdWindow, true)
+		if err != nil {
+			logging.Warn("failed to set window floating: %+v", err)
+			return
+		}
+		err = hyprutils.SetSize(*createdWindow, window.Size)
+		if err != nil {
+			logging.Warn("failed to set window size: %+v", err)
+			return
+		}
+		err = hyprutils.SetPosition(*createdWindow, window.Position)
+		if err != nil {
+			logging.Warn("failed to set window position: %+v", err)
+			return
+		}
+		err = hyprutils.SyncInSizeAndPos(createdWindow, &window.Size, &window.Position)
+		if err != nil {
+			logging.Warn("failed to save window state to memory")
+			return
+		}
+		state.UpdateWindow(window.Name, createdWindow)
+		err = hyprutils.MoveWindowToWorkspace(createdWindow, specialWorkspaceName, true)
+		if err != nil {
+			logging.Warn("failed to move window to hidden workspace")
+			return
+		}
+		break channelLoop
 	}
 	registerKeybind(*window)
 }
